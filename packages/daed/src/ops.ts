@@ -8,6 +8,7 @@ import {
 } from '@solana/kit';
 import { getCreateAccountInstruction } from '@solana-program/system';
 import {
+    AccountState,
     TOKEN_2022_PROGRAM_ADDRESS,
     extension,
     findAssociatedTokenPda,
@@ -28,13 +29,34 @@ export const DAED_SYMBOL = 'dAED';
 export const DAED_METADATA_URI =
     'https://raw.githubusercontent.com/fils-money/fils/main/packages/daed/daed-metadata.json';
 
+export interface CreateDaedMintOptions {
+    /**
+     * Initialize every new token account frozen (DefaultAccountState
+     * extension). This is the Token ACL / sRFC37 pattern: nobody can receive
+     * dAED until their account is thawed through a gate (see the daed-gate
+     * program). Off by default — the permissive dAED needs no perimeter.
+     */
+    defaultFrozen?: boolean;
+    /**
+     * Add the ConfidentialTransferMint extension (accounts auto-approved).
+     * Amounts of confidential transfers are hidden from the public but, when
+     * `auditorElgamalPubkey` is set, remain decryptable by the auditor — the
+     * regulator-palatable privacy shape (not a "privacy token").
+     */
+    confidential?: { auditorElgamalPubkey?: Address };
+}
+
 /**
  * Create the dAED reference mint: Token-2022, 2 decimals (raw amount = fils),
  * on-mint metadata (MetadataPointer + TokenMetadata extensions — no external
  * metadata program), and mint + freeze authority retained by the issuer, as
  * the CBUAE's Payment Token Services Regulation expects of an issuer.
  */
-export async function createDaedMint(rpc: DaedRpc, issuer: KeyPairSigner): Promise<{ mint: Address; signature: Signature }> {
+export async function createDaedMint(
+    rpc: DaedRpc,
+    issuer: KeyPairSigner,
+    options: CreateDaedMintOptions = {},
+): Promise<{ mint: Address; signature: Signature }> {
     const mint = await generateKeyPairSigner();
 
     const metadataPointer = extension('MetadataPointer', {
@@ -49,12 +71,25 @@ export async function createDaedMint(rpc: DaedRpc, issuer: KeyPairSigner): Promi
         uri: DAED_METADATA_URI,
         additionalMetadata: new Map<string, string>(),
     });
+    const fixedExtensions = [
+        ...(options.defaultFrozen ? [extension('DefaultAccountState', { state: AccountState.Frozen })] : []),
+        ...(options.confidential
+            ? [
+                  extension('ConfidentialTransferMint', {
+                      authority: issuer.address,
+                      autoApproveNewAccounts: true,
+                      auditorElgamalPubkey: options.confidential.auditorElgamalPubkey ?? null,
+                  }),
+              ]
+            : []),
+        metadataPointer,
+    ];
 
     // The mint account is allocated without the variable-length TokenMetadata
     // extension (it is realloc'd by InitializeTokenMetadata), but funded with
     // enough rent for the final size.
-    const spaceWithoutMetadata = BigInt(getMintSize([metadataPointer]));
-    const spaceWithMetadata = BigInt(getMintSize([metadataPointer, tokenMetadata]));
+    const spaceWithoutMetadata = BigInt(getMintSize(fixedExtensions));
+    const spaceWithMetadata = BigInt(getMintSize([...fixedExtensions, tokenMetadata]));
     const rent = await rpc.getMinimumBalanceForRentExemption(spaceWithMetadata).send();
 
     const instructions: Instruction[] = [
@@ -65,7 +100,7 @@ export async function createDaedMint(rpc: DaedRpc, issuer: KeyPairSigner): Promi
             lamports: rent,
             programAddress: TOKEN_2022_PROGRAM_ADDRESS,
         }),
-        ...getPreInitializeInstructionsForMintExtensions(mint.address, [metadataPointer]),
+        ...getPreInitializeInstructionsForMintExtensions(mint.address, fixedExtensions),
         getInitializeMintInstruction({
             mint: mint.address,
             decimals: AED_DECIMALS,
