@@ -66,6 +66,9 @@ pnpm build && pnpm test
 #   → pay it → verify on-chain → print the receipt
 solana-test-validator --reset --quiet &   # in another terminal
 pnpm e2e
+
+pnpm e2e:gate   # Token ACL perimeter: frozen-by-default → attest → thaw → pay → revoke (needs `anchor build` + deploy)
+pnpm e2e:402    # agentic payments: HTTP 402 challenge → agent pays AED 0.25 on-chain → resource
 ```
 
 Then open the merchant demo:

@@ -14,12 +14,14 @@ composability is preserved, and wallets auto-thaw via `@solana/token-helpers`
 when the mint's metadata carries a `token_acl` field. Transfer hooks remain
 the right tool only when logic must run on *every* transfer.
 
-- [ ] Add a Token ACL configuration path for dAED (`DefaultAccountState=frozen`
-      + MintConfig PDA); keep `daed-hook` as the strict per-transfer variant
-      and document the trade-off table.
-- [ ] Ship a **custom Gate Program** that thaws an account iff the wallet
-      holds a valid KYC attestation (see #2) — the "licensed-holder perimeter"
-      with self-service onboarding.
+- [x] Add a Token ACL configuration path for dAED (`DefaultAccountState=frozen`
+      via `createDaedMint({ defaultFrozen: true })`); `daed-hook` kept as the
+      strict per-transfer variant with the trade-off table in its README.
+- [x] Ship a **gate program** that thaws an account iff the wallet holds a
+      valid KYC attestation — `programs/daed-gate`, with attestor/issuer role
+      separation and an on-chain e2e (`pnpm e2e:gate`) covering the negative
+      paths. *(v1 uses its own attestation registry; SAS verification below
+      is the v2.)*
 
 ### 2. Solana Attestation Service (SAS) for KYC
 
@@ -41,9 +43,12 @@ auditor. That is exactly the shape a CBUAE-supervised token wants (and
 distinct from prohibited "privacy tokens" — flag to counsel). Agave v4.2's
 transaction format v1 is expected to make confidential transfers single-tx.
 
-- [ ] dAED confidential variant: `--enable-confidential-transfers auto` +
-      auditor pubkey; payroll/B2B demo where the public sees a transfer but
-      only the auditor sees AED amounts.
+- [x] dAED confidential variant: `daed:create -- --confidential [auditor]`
+      (ConfidentialTransferMint extension, auto-approve, optional auditor
+      key), verified on a local validator; see docs/confidential.md.
+- [ ] Payroll/B2B demo where the public sees a transfer but only the auditor
+      sees AED amounts (waiting on the Agave v4.2 single-tx flow for a clean
+      demo).
 
 ## Tier 2 — Ride the two waves that just started
 
@@ -54,9 +59,11 @@ mandatory for revenue ≥ AED 50M on 1 Jan 2027, < AED 50M on 1 Jul 2027, B2G
 on 1 Oct 2027 (Peppol 5-corner model, PINT AE XML, 51 mandatory fields,
 Dh5,000/month penalties). Nobody connects crypto payments to this yet.
 
-- [ ] Map `FilsReceipt` → PINT AE mandatory fields; `toPintAeXml()` exporter
-      so a merchant's ASP can ingest a Solana-settled sale like any other.
-- [ ] Playbook chapter: "a stablecoin payment still needs an e-invoice."
+- [x] Map `FilsReceipt` → PINT AE fields; `receiptToPintAeXml()` exporter
+      (`@fils/einvoice`) with exact line-net reconciliation, plus the demo's
+      `GET /api/invoice/[reference]`.
+- [ ] Field-completeness validation against the Ministry's data dictionary
+      (with an ASP), and a playbook deep-dive chapter.
 
 ### 5. AED agentic payments (x402 / MPP)
 
@@ -67,9 +74,13 @@ and MPP (Stripe/Tempo, Solana supported at launch), with the Foundation's
 DDSC announcement names "machine-to-machine and AI" as a target use case —
 but nobody demos agents paying in **dirhams**.
 
-- [ ] `fils-402`: an AED-denominated paid endpoint on pay-kit (dAED on
-      devnet); `pay curl` demo where an AI agent settles in fils.
-- [ ] Position at SEZ: "the dirham layer for agentic commerce."
+- [x] `@fils/agent402`: an AED-denominated 402 paywall + agent client
+      (x402-style verification mode), e2e incl. replay protection and an
+      agent budget guard.
+- [ ] Full x402 "exact" facilitator settlement via pay-kit; list the demo
+      endpoint in the pay-skills catalog.
+- [ ] Position at SEZ: "the dirham layer for agentic commerce"
+      (docs/workshop.md is the session).
 
 ## Tier 3 — Distribution & adoption
 

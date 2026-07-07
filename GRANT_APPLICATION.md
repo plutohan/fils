@@ -34,28 +34,34 @@ The MVP is **already public and verified end-to-end** against a local
 validator — this application funds hardening, devnet/mainnet-readiness, legal
 review, and ecosystem distribution.
 
-Working today (all in the repo):
+Working today (all in the repo, all verified end-to-end):
 
 1. **dAED reference token** — Token-2022 mint with 2 decimals (raw amounts
-   are literal fils), on-mint metadata, issuer freeze authority; creation
-   script + faucet.
-2. **daed-hook program** (Anchor) — a licensed-holder allowlist as an SPL
-   transfer hook: every transfer fails unless the destination owner holds an
-   issuer-created allowlist entry. The CBUAE distribution-perimeter
-   requirement as ~200 lines of auditable configuration, not custom
-   infrastructure. Builds and deploys (Anchor 1.0, Agave 4.0).
+   are literal fils), on-mint metadata, issuer freeze authority; optional
+   **default-frozen** and **confidential-transfer (auditor-key)** variants;
+   creation script + faucet.
+2. **daed-gate program** (Anchor) — the Token ACL (sRFC37) compliance
+   perimeter: accounts born frozen, thaw permissionless but KYC-attestation-
+   gated, revocation and enforcement as separate acts. On-chain e2e covers
+   the negative paths. **daed-hook** ships alongside as the strict
+   per-transfer variant.
 3. **@fils/core SDK** — AED token registry (a newly licensed token is a
    config entry, not a code change), fils-precise amounts with ar-AE/en-AE
    formatting, Solana Pay payment requests, reference-based on-chain
-   verification, receipts carrying TRN + 5% VAT breakdown aligned with the
-   incoming UAE e-invoicing mandate. 19 unit tests + scripted e2e.
-4. **Fils Café** — a Next.js merchant checkout (Arabic RTL + English):
-   cart → QR → sub-second confirmation → receipt with explorer proof,
+   verification, receipts carrying TRN + 5% VAT breakdown.
+4. **@fils/einvoice** — Fils receipt → **PINT AE e-invoice XML** with exact
+   VAT/line reconciliation and the settlement signature as payment evidence;
+   the UAE mandate's first wave is January 2027.
+5. **@fils/agent402** — **AED agentic payments**: an x402-style HTTP 402
+   paywall settled in dAED plus the agent-side client, with replay
+   protection and an agent budget guard.
+6. **Fils Café** — a Next.js merchant checkout (Arabic RTL + English):
+   cart → QR → sub-second confirmation → receipt → downloadable e-invoice,
    including a dev-mode simulated wallet so anyone can run the full flow in
    two commands.
-5. **UAE Solana Payments Playbook** — the PTSR, Federal Decree-Law 6/2025,
-   VARA and free-zone carve-outs mapped to the Solana stack, with primary
-   sources.
+7. **UAE Solana Payments Playbook** + issuer brief + workshop runbook — the
+   PTSR, Federal Decree-Law 6/2025, VARA and free-zone carve-outs mapped to
+   the Solana stack, with primary sources.
 
 ## Public good
 
@@ -80,7 +86,7 @@ kit) rather than duplicating it.
 
 | # | Weeks | Deliverable | Amount |
 | --- | --- | --- | --- |
-| M1 | 1–3 | dAED + daed-hook live on **devnet** with on-chain hook e2e (allowlisted transfer passes, blocked transfer fails); **Token ACL (sRFC37) configuration with a Gate Program that verifies Solana Attestation Service KYC attestations** (the Foundation-current compliance architecture); hosted faucet; issuer design note | $3,000 |
+| M1 | 1–3 | dAED + daed-gate + daed-hook live on **devnet** (the gate's attestation e2e already runs locally); **upgrade the gate to verify Solana Attestation Service credentials directly** (Sumsub/Civic-issued); hosted faucet; issuer design note delivered to at least one AED issuer | $3,000 |
 | M2 | 4–6 | @fils/core v0.1 on npm; hosted Fils Café demo on devnet (AR/EN); 3-minute demo video; integration guide | $3,500 |
 | M3 | 7–9 | Playbook reviewed by a UAE virtual-assets law firm; issuer integration brief shared with Zand / AE Coin / RAKBank contacts; hands-on workshop at a Superteam UAE event (SEZ side-event); v0.1 mainnet-ready release | $3,500 |
 

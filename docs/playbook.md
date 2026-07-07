@@ -61,7 +61,7 @@ The PTSR reads like a Token-2022 configuration sheet:
 
 | PTSR requirement (issuer) | Token-2022 mechanism |
 | --- | --- |
-| Control of distribution (KYC'd holders) | **Token ACL (sRFC37)**: `DefaultAccountState=frozen` + Gate Program self-service thaw (recommended — transfers stay standard, DeFi-composable); or TransferHook → allowlist program ([`daed-hook`](../programs/daed-hook)) when logic must run on *every* transfer |
+| Control of distribution (KYC'd holders) | **Token ACL (sRFC37)**: `DefaultAccountState=frozen` + attestation-gated permissionless thaw ([`daed-gate`](../programs/daed-gate), with on-chain e2e) — recommended, transfers stay standard and DeFi-composable; or TransferHook → allowlist program ([`daed-hook`](../programs/daed-hook)) when logic must run on *every* transfer |
 | KYC once, reuse everywhere | [Solana Attestation Service](https://attest.solana.com/) — issuers (Sumsub, Civic, RNS.ID live on mainnet) attest KYC to a wallet; the Gate Program verifies the attestation instead of maintaining a bespoke allowlist |
 | Act on unlawful use / law-enforcement response | Freeze authority on the mint; `set_allowed(wallet, false)` |
 | Redemption at par, burn on redemption | Mint/burn authority against reserve ops |
