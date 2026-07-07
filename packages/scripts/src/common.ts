@@ -20,13 +20,6 @@ export function rpcFromEnv(): { rpc: ScriptRpc; rpcUrl: string } {
     return { rpc: createSolanaRpc(rpcUrl) as ScriptRpc, rpcUrl };
 }
 
-export function clusterFromRpcUrl(rpcUrl: string): 'localnet' | 'devnet' | 'testnet' | 'mainnet-beta' {
-    if (rpcUrl.includes('devnet')) return 'devnet';
-    if (rpcUrl.includes('testnet')) return 'testnet';
-    if (rpcUrl.includes('mainnet')) return 'mainnet-beta';
-    return 'localnet';
-}
-
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function airdropAndConfirm(rpc: ScriptRpc, recipient: Address, sol: number): Promise<void> {

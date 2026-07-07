@@ -20,13 +20,14 @@ import {
     findPayment,
     formatAed,
     parseAed,
+    guessClusterFromUrl,
 } from '@fils/core';
 
-import { airdropAndConfirm, clusterFromRpcUrl, rpcFromEnv } from './common.js';
+import { airdropAndConfirm, rpcFromEnv } from './common.js';
 import { createDaedMint, mintDaedTo, payAedRequest } from '@fils/daed';
 
 const { rpc, rpcUrl } = rpcFromEnv();
-const cluster = clusterFromRpcUrl(rpcUrl);
+const cluster = guessClusterFromUrl(rpcUrl);
 console.log(`e2e against ${cluster} (${rpcUrl})\n`);
 
 const step = (title: string) => console.log(`\n=== ${title}`);

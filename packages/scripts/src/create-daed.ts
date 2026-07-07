@@ -6,12 +6,14 @@
  *   pnpm --filter @fils/scripts daed:create
  *   RPC_URL=https://api.devnet.solana.com pnpm --filter @fils/scripts daed:create
  */
-import { airdropAndConfirm, clusterFromRpcUrl, rpcFromEnv } from './common.js';
+import { guessClusterFromUrl } from '@fils/core';
+
+import { airdropAndConfirm, rpcFromEnv } from './common.js';
 import { loadOrCreateSigner, saveDaedMintState } from '@fils/daed/node';
 import { createDaedMint } from '@fils/daed';
 
 const { rpc, rpcUrl } = rpcFromEnv();
-const cluster = clusterFromRpcUrl(rpcUrl);
+const cluster = guessClusterFromUrl(rpcUrl);
 const issuer = await loadOrCreateSigner('issuer');
 
 console.log(`cluster : ${cluster} (${rpcUrl})`);

@@ -10,6 +10,7 @@ export {
     type AedLocale,
     type VatBreakdown,
 } from './amount.js';
+export { explorerTxUrl, guessClusterFromUrl } from './cluster.js';
 export {
     AedTokenRegistry,
     TOKEN_2022_PROGRAM_ADDRESS,

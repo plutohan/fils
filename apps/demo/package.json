@@ -1,0 +1,28 @@
+{
+  "name": "demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fils Café — merchant checkout demo: AED payments on Solana with dAED (Arabic RTL + English)",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@fils/core": "workspace:*",
+    "@fils/daed": "workspace:*",
+    "@solana/kit": "^6.0.1",
+    "next": "^15.5.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.9.3"
+  }
+}
