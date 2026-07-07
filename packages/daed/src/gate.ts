@@ -16,6 +16,7 @@ import {
     type KeyPairSigner,
     type Signature,
 } from '@solana/kit';
+import { SYSTEM_PROGRAM_ADDRESS } from '@solana-program/system';
 import {
     AuthorityType,
     TOKEN_2022_PROGRAM_ADDRESS,
@@ -25,7 +26,6 @@ import {
 import { buildAndSend, type DaedRpc } from './tx.js';
 
 export const DAED_GATE_PROGRAM_ADDRESS = address('HfYBcwBTbHdtNmAD1Kcu8WSxwECfoSX3ELc77qEnzqWG');
-export const SYSTEM_PROGRAM = address('11111111111111111111111111111111');
 
 // sha256("global:<instruction_name>")[0..8]
 const DISCRIMINATORS = {
@@ -95,7 +95,7 @@ export async function initializeGate(
             { address: issuer.address, role: AccountRole.WRITABLE_SIGNER },
             { address: gateConfig, role: AccountRole.WRITABLE },
             { address: mint, role: AccountRole.READONLY },
-            { address: SYSTEM_PROGRAM, role: AccountRole.READONLY },
+            { address: SYSTEM_PROGRAM_ADDRESS, role: AccountRole.READONLY },
         ],
         data: instructionData(DISCRIMINATORS.initializeGate, addressBytes(attestor)),
     };
@@ -117,7 +117,7 @@ export async function attestWallet(
             { address: attestor.address, role: AccountRole.WRITABLE_SIGNER },
             { address: await deriveGateConfigPda(mint), role: AccountRole.READONLY },
             { address: await deriveAttestationPda(mint, wallet), role: AccountRole.WRITABLE },
-            { address: SYSTEM_PROGRAM, role: AccountRole.READONLY },
+            { address: SYSTEM_PROGRAM_ADDRESS, role: AccountRole.READONLY },
         ],
         data: instructionData(DISCRIMINATORS.attest, addressBytes(wallet), i64LeBytes(expiry)),
     };
