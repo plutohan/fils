@@ -1,6 +1,10 @@
 # Project-specific typos configuration.
 # "fils" is the minor unit of the UAE dirham (1 AED = 100 fils) and this
 # project's name; "dAED" is our devnet AED reference token symbol.
+[default]
+# Base58 addresses/signatures (32-88 chars) routinely contain typo-lookalikes.
+extend-ignore-re = ["[1-9A-HJ-NP-Za-km-z]{32,88}"]
+
 [default.extend-words]
 fils = "fils"
 Fils = "Fils"
