@@ -41,10 +41,12 @@ Working today (all in the repo, all verified end-to-end):
    **default-frozen** and **confidential-transfer (auditor-key)** variants;
    creation script + faucet.
 2. **daed-gate program** (Anchor) — the Token ACL (sRFC37) compliance
-   perimeter: accounts born frozen, thaw permissionless but KYC-attestation-
-   gated, revocation and enforcement as separate acts. On-chain e2e covers
-   the negative paths. **daed-hook** ships alongside as the strict
-   per-transfer variant.
+   perimeter: accounts born frozen, thaw permissionless but KYC-gated —
+   via its own registry **or real Solana Attestation Service attestations**
+   (verified on-chain against the mainnet SAS program: trusted credential +
+   schema, subject binding, expiry). Revocation and enforcement are separate
+   acts; on-chain e2e covers the negative paths. **daed-hook** ships
+   alongside as the strict per-transfer variant.
 3. **@fils/core SDK** — AED token registry (a newly licensed token is a
    config entry, not a code change), fils-precise amounts with ar-AE/en-AE
    formatting, Solana Pay payment requests, reference-based on-chain
@@ -86,7 +88,7 @@ kit) rather than duplicating it.
 
 | # | Weeks | Deliverable | Amount |
 | --- | --- | --- | --- |
-| M1 | 1–3 | dAED + daed-gate + daed-hook live on **devnet** (the gate's attestation e2e already runs locally); **upgrade the gate to verify Solana Attestation Service credentials directly** (Sumsub/Civic-issued); hosted faucet; issuer design note delivered to at least one AED issuer | $3,000 |
+| M1 | 1–3 | dAED + daed-gate + daed-hook live on **devnet** (the gate already verifies **real SAS attestations** locally — e2e against the mainnet-dumped SAS program); public mock-IDV credential on devnet; hosted faucet; issuer design note delivered to at least one AED issuer | $3,000 |
 | M2 | 4–6 | @fils/core v0.1 on npm; hosted Fils Café demo on devnet (AR/EN); 3-minute demo video; integration guide | $3,500 |
 | M3 | 7–9 | Playbook reviewed by a UAE virtual-assets law firm; issuer integration brief shared with Zand / AE Coin / RAKBank contacts; hands-on workshop at a Superteam UAE event (SEZ side-event); v0.1 mainnet-ready release | $3,500 |
 

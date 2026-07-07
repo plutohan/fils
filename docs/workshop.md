@@ -27,9 +27,9 @@ no waiting on devnet faucets.
 
 - Wire a real Solana Pay wallet against the demo QR on devnet.
 - Replace the demo menu with your own shop; ship it as a template.
-- Write a Gate Program that verifies a **Solana Attestation Service**
-  credential instead of the registry entry (the repo's v2 target — a great
-  first PR).
+- Extend the SAS schema with a jurisdiction field and enforce it in
+  `thaw_account_with_sas` (field-level policy — a great first PR; the
+  SAS verification path itself already works: `pnpm e2e:gate:sas`).
 - AED paywall for your own API (`@fils/agent402` is ~200 lines — read it).
 - PINT AE field-completeness checker against the Ministry's data dictionary.
 

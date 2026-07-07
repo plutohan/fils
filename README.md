@@ -31,7 +31,7 @@ What's missing is the connective tissue. Fils is that tissue:
 
 | Piece | What it is | Who it's for |
 | --- | --- | --- |
-| [`programs/daed-gate`](programs/daed-gate) | **Token ACL (sRFC37) perimeter** — default-frozen mint + attestation-gated *permissionless thaw*; transfers stay standard. The recommended compliance path | AED issuers evaluating Solana |
+| [`programs/daed-gate`](programs/daed-gate) | **Token ACL (sRFC37) perimeter** — default-frozen mint + *permissionless thaw* gated by KYC attestations, including **real Solana Attestation Service credentials**; transfers stay standard. The recommended compliance path | AED issuers evaluating Solana |
 | [`programs/daed-hook`](programs/daed-hook) | Token-2022 **transfer-hook allowlist program** — the same perimeter enforced on every transfer, for when per-transfer logic is genuinely required | AED issuers needing strict per-transfer control |
 | [`scripts`](packages/scripts) | Create **dAED**, a devnet AED reference token (Token-2022, 2 decimals = fils, metadata, freeze authority) + faucet | Developers who need AED to build against today |
 | [`@fils/core`](packages/core) | TypeScript SDK: AED token registry, fils-precise amounts with AR/EN formatting, Solana Pay-compatible payment requests, on-chain payment verification, UAE-e-invoice-aligned receipts | Payment app builders |

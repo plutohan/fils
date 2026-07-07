@@ -49,11 +49,24 @@ pnpm --filter @fils/scripts daed:create -- --default-frozen
 pnpm --filter @fils/scripts e2e:gate   # full on-chain scenario incl. negatives
 ```
 
-The attestation registry is deliberately a thin projection of an off-chain
-KYC check — exactly what a Solana Attestation Service credential represents.
-Verifying **SAS attestations directly** (approved issuer set, schema,
-expiry/revocation) instead of this registry is the planned v2; production
-deployments should prefer the audited Token ACL program with this logic as a
-Gate Program.
+## Solana Attestation Service mode (v2 — delivered)
+
+Initialize the gate with an SAS policy (`credential` + `schema`) and
+`thaw_account_with_sas` accepts **real SAS attestations** instead of the
+built-in registry: the account must be owned by the SAS program
+(`22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG`), carry the Attestation
+discriminator, match the trusted credential and schema, be bound to the
+token-account owner via its nonce, and be unexpired. KYC once with a real
+IDV provider (Sumsub/Civic-style), thaw anywhere this gate trusts them.
+
+Notes: SAS-side revocation = closing the attestation (thaw then fails
+naturally); the enforcement `freeze_wallet_account` stays with the
+issuer/attestor. The attestation `data` payload is not inspected — field-
+level policy belongs in the choice of schema. `expiry <= now` is rejected
+(conservative if a schema uses 0-as-never). Verified end-to-end against the
+mainnet-dumped SAS program on a local validator (`pnpm e2e:gate:sas`).
+
+Production deployments should still prefer the audited Token ACL program
+with this logic as a Gate Program.
 
 **Reference code. Audit before mainnet use.**

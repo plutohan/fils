@@ -11,6 +11,7 @@ export {
 } from './ops.js';
 export {
     DAED_GATE_PROGRAM_ADDRESS,
+    SAS_PROGRAM_ADDRESS,
     attestWallet,
     deriveAttestationPda,
     deriveGateConfigPda,
@@ -18,4 +19,6 @@ export {
     initializeGate,
     revokeWallet,
     thawGatedAccount,
+    thawGatedAccountWithSas,
+    type SasGatePolicy,
 } from './gate.js';

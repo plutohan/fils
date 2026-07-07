@@ -27,12 +27,16 @@ import { buildAndSend, type DaedRpc } from './tx.js';
 
 export const DAED_GATE_PROGRAM_ADDRESS = address('HfYBcwBTbHdtNmAD1Kcu8WSxwECfoSX3ELc77qEnzqWG');
 
+/** Solana Attestation Service program (same id on every cluster via dump). */
+export const SAS_PROGRAM_ADDRESS = address('22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG');
+
 // sha256("global:<instruction_name>")[0..8]
 const DISCRIMINATORS = {
     initializeGate: Uint8Array.from([41, 213, 207, 127, 15, 238, 192, 17]),
     attest: Uint8Array.from([83, 148, 120, 119, 144, 139, 117, 160]),
     revoke: Uint8Array.from([170, 23, 31, 34, 133, 173, 93, 242]),
     thawAccount: Uint8Array.from([115, 152, 79, 213, 213, 169, 184, 35]),
+    thawAccountWithSas: Uint8Array.from([30, 196, 224, 84, 196, 31, 148, 98]),
     freezeWalletAccount: Uint8Array.from([28, 157, 222, 211, 235, 104, 170, 48]),
 } as const;
 
@@ -72,15 +76,33 @@ function i64LeBytes(value: bigint): Uint8Array {
     return bytes;
 }
 
+/** Trust SAS attestations under this credential + schema for self-thaw. */
+export interface SasGatePolicy {
+    credential: Address;
+    schema: Address;
+}
+
+/** Borsh Option<Pubkey>: 0x00, or 0x01 followed by the 32-byte key. */
+function optionAddressBytes(value: Address | undefined): Uint8Array {
+    if (value === undefined) return Uint8Array.from([0]);
+    const bytes = new Uint8Array(33);
+    bytes[0] = 1;
+    bytes.set(addressBytes(value), 1);
+    return bytes;
+}
+
 /**
  * Hand the mint's freeze authority to the gate config PDA and initialize the
  * gate. Must run before any token account of the mint can ever be thawed.
+ * Pass `sasPolicy` to additionally accept Solana Attestation Service
+ * attestations (see `thawGatedAccountWithSas`).
  */
 export async function initializeGate(
     rpc: DaedRpc,
     issuer: KeyPairSigner,
     mint: Address,
     attestor: Address,
+    sasPolicy?: SasGatePolicy,
 ): Promise<{ gateConfig: Address; signature: Signature }> {
     const gateConfig = await deriveGateConfigPda(mint);
     const setFreezeAuthority = getSetAuthorityInstruction({
@@ -97,7 +119,12 @@ export async function initializeGate(
             { address: mint, role: AccountRole.READONLY },
             { address: SYSTEM_PROGRAM_ADDRESS, role: AccountRole.READONLY },
         ],
-        data: instructionData(DISCRIMINATORS.initializeGate, addressBytes(attestor)),
+        data: instructionData(
+            DISCRIMINATORS.initializeGate,
+            addressBytes(attestor),
+            optionAddressBytes(sasPolicy?.credential),
+            optionAddressBytes(sasPolicy?.schema),
+        ),
     };
     const signature = await buildAndSend(rpc, issuer, [setFreezeAuthority, initialize]);
     return { gateConfig, signature };
@@ -164,6 +191,33 @@ export async function thawGatedAccount(
             { address: TOKEN_2022_PROGRAM_ADDRESS, role: AccountRole.READONLY },
         ],
         data: instructionData(DISCRIMINATORS.thawAccount),
+    };
+    return await buildAndSend(rpc, feePayer, [instruction]);
+}
+
+/**
+ * PERMISSIONLESS thaw via a **Solana Attestation Service** attestation: the
+ * gate must have been initialized with a `SasGatePolicy`, and
+ * `sasAttestation` must be a live SAS attestation whose nonce is the token
+ * account's owner.
+ */
+export async function thawGatedAccountWithSas(
+    rpc: DaedRpc,
+    feePayer: KeyPairSigner,
+    mint: Address,
+    tokenAccount: Address,
+    sasAttestation: Address,
+): Promise<Signature> {
+    const instruction: Instruction = {
+        programAddress: DAED_GATE_PROGRAM_ADDRESS,
+        accounts: [
+            { address: tokenAccount, role: AccountRole.WRITABLE },
+            { address: mint, role: AccountRole.READONLY },
+            { address: await deriveGateConfigPda(mint), role: AccountRole.READONLY },
+            { address: sasAttestation, role: AccountRole.READONLY },
+            { address: TOKEN_2022_PROGRAM_ADDRESS, role: AccountRole.READONLY },
+        ],
+        data: instructionData(DISCRIMINATORS.thawAccountWithSas),
     };
     return await buildAndSend(rpc, feePayer, [instruction]);
 }

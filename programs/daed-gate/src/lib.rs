@@ -25,11 +25,18 @@ use anchor_spl::token_interface::{
     FreezeAccount, Mint, ThawAccount, TokenAccount, TokenInterface,
     freeze_account as token_freeze_account, thaw_account as token_thaw_account,
 };
+use solana_attestation_service_client::accounts::Attestation as SasAttestation;
 
 declare_id!("HfYBcwBTbHdtNmAD1Kcu8WSxwECfoSX3ELc77qEnzqWG");
 
 pub const GATE_SEED: &[u8] = b"gate";
 pub const KYC_SEED: &[u8] = b"kyc";
+
+/// Solana Attestation Service (mainnet program, dumpable to any cluster).
+pub const SAS_PROGRAM_ID: Pubkey =
+    anchor_lang::pubkey!("22zoJMtdu4tQc2PzL74ZUT7FrwgB1Udec8DdW4yw4BdG");
+/// First byte of an SAS `Attestation` account.
+pub const SAS_ATTESTATION_DISCRIMINATOR: u8 = 2;
 
 #[program]
 pub mod daed_gate {
@@ -38,11 +45,28 @@ pub mod daed_gate {
     /// Issuer-only, once per mint. The issuer must FIRST set the mint's
     /// freeze authority to this gate's config PDA (client-side SetAuthority);
     /// this instruction then records the attestor and verifies the handover.
-    pub fn initialize_gate(ctx: Context<InitializeGate>, attestor: Pubkey) -> Result<()> {
+    ///
+    /// `sas_credential`/`sas_schema` (both or neither) additionally accept
+    /// **Solana Attestation Service** attestations: any wallet holding a
+    /// valid attestation issued under that credential+schema (e.g. by a
+    /// Sumsub/Civic-style IDV provider) can thaw via `thaw_account_with_sas`
+    /// — no gate-specific attestation registry write needed.
+    pub fn initialize_gate(
+        ctx: Context<InitializeGate>,
+        attestor: Pubkey,
+        sas_credential: Option<Pubkey>,
+        sas_schema: Option<Pubkey>,
+    ) -> Result<()> {
+        require!(
+            sas_credential.is_some() == sas_schema.is_some(),
+            DaedGateError::SasPolicyIncomplete
+        );
         let config = &mut ctx.accounts.gate_config;
         config.mint = ctx.accounts.mint.key();
         config.issuer = ctx.accounts.payer.key();
         config.attestor = attestor;
+        config.sas_credential = sas_credential;
+        config.sas_schema = sas_schema;
         config.bump = ctx.bumps.gate_config;
         Ok(())
     }
@@ -79,6 +103,58 @@ pub mod daed_gate {
         let mint = ctx.accounts.gate_config.mint;
         let signer_seeds: &[&[&[u8]]] =
             &[&[GATE_SEED, mint.as_ref(), &[ctx.accounts.gate_config.bump]]];
+        token_thaw_account(CpiContext::new_with_signer(
+            ctx.accounts.token_program.key(),
+            ThawAccount {
+                account: ctx.accounts.token_account.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.gate_config.to_account_info(),
+            },
+            signer_seeds,
+        ))
+    }
+
+    /// PERMISSIONLESS: like `thaw_account`, but the proof is a **Solana
+    /// Attestation Service** attestation for the token account's owner,
+    /// issued under the credential + schema this gate trusts (a real IDV
+    /// provider's KYC passport). Verified: SAS-owned, Attestation-typed,
+    /// matching credential and schema, bound to the owner via the nonce,
+    /// not expired.
+    pub fn thaw_account_with_sas(ctx: Context<ThawWithSas>) -> Result<()> {
+        let config = &ctx.accounts.gate_config;
+        let credential = config.sas_credential.ok_or(DaedGateError::SasNotConfigured)?;
+        let schema = config.sas_schema.ok_or(DaedGateError::SasNotConfigured)?;
+
+        let info = &ctx.accounts.sas_attestation;
+        require!(info.owner == &SAS_PROGRAM_ID, DaedGateError::SasWrongOwner);
+        {
+            let data = info.try_borrow_data()?;
+            require!(
+                data.first() == Some(&SAS_ATTESTATION_DISCRIMINATOR),
+                DaedGateError::SasWrongAccountType
+            );
+            let attestation =
+                SasAttestation::from_bytes(&data).map_err(|_| DaedGateError::SasMalformed)?;
+            require!(
+                attestation.credential.to_bytes() == credential.to_bytes(),
+                DaedGateError::SasWrongCredential
+            );
+            require!(
+                attestation.schema.to_bytes() == schema.to_bytes(),
+                DaedGateError::SasWrongSchema
+            );
+            require!(
+                attestation.nonce.to_bytes() == ctx.accounts.token_account.owner.to_bytes(),
+                DaedGateError::SasSubjectMismatch
+            );
+            require!(
+                attestation.expiry > Clock::get()?.unix_timestamp,
+                DaedGateError::AttestationExpired
+            );
+        }
+
+        let mint = config.mint;
+        let signer_seeds: &[&[&[u8]]] = &[&[GATE_SEED, mint.as_ref(), &[config.bump]]];
         token_thaw_account(CpiContext::new_with_signer(
             ctx.accounts.token_program.key(),
             ThawAccount {
@@ -174,6 +250,20 @@ pub struct Thaw<'info> {
 }
 
 #[derive(Accounts)]
+pub struct ThawWithSas<'info> {
+    #[account(mut, token::mint = mint)]
+    pub token_account: InterfaceAccount<'info, TokenAccount>,
+    pub mint: InterfaceAccount<'info, Mint>,
+    #[account(seeds = [GATE_SEED, mint.key().as_ref()], bump = gate_config.bump)]
+    pub gate_config: Account<'info, GateConfig>,
+    /// CHECK: verified in the handler — owned by the SAS program, Attestation
+    /// discriminator, trusted credential+schema, nonce == token account
+    /// owner, not expired.
+    pub sas_attestation: UncheckedAccount<'info>,
+    pub token_program: Interface<'info, TokenInterface>,
+}
+
+#[derive(Accounts)]
 pub struct Freeze<'info> {
     #[account(
         constraint = authority.key() == gate_config.issuer || authority.key() == gate_config.attestor
@@ -194,11 +284,15 @@ pub struct GateConfig {
     pub mint: Pubkey,
     pub issuer: Pubkey,
     pub attestor: Pubkey,
+    /// When set (with `sas_schema`), SAS attestations under this credential
+    /// are accepted by `thaw_account_with_sas`.
+    pub sas_credential: Option<Pubkey>,
+    pub sas_schema: Option<Pubkey>,
     pub bump: u8,
 }
 
 impl GateConfig {
-    pub const SPACE: usize = 8 + 32 + 32 + 32 + 1;
+    pub const SPACE: usize = 8 + 32 + 32 + 32 + (1 + 32) + (1 + 32) + 1;
 }
 
 /// One KYC attestation per (mint, wallet), written by the attestor.
@@ -225,4 +319,20 @@ pub enum DaedGateError {
     AttestationRevoked,
     #[msg("attestation has expired")]
     AttestationExpired,
+    #[msg("sas_credential and sas_schema must be set together")]
+    SasPolicyIncomplete,
+    #[msg("this gate has no SAS policy configured")]
+    SasNotConfigured,
+    #[msg("attestation account is not owned by the Solana Attestation Service")]
+    SasWrongOwner,
+    #[msg("account is not an SAS Attestation")]
+    SasWrongAccountType,
+    #[msg("SAS attestation failed to deserialize")]
+    SasMalformed,
+    #[msg("SAS attestation is not under the trusted credential")]
+    SasWrongCredential,
+    #[msg("SAS attestation is not of the trusted schema")]
+    SasWrongSchema,
+    #[msg("SAS attestation is not bound to the token account owner")]
+    SasSubjectMismatch,
 }

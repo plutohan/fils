@@ -30,10 +30,12 @@ KYC issuers already attesting: Sumsub, Civic, RNS.ID. A real AED issuer would
 not maintain a bespoke allowlist — it would trust attestations from approved
 IDV providers.
 
-- [ ] Gate Program verifies an SAS attestation (approved issuer set,
-      schema = KYC-passed + jurisdiction, expiry/revocation checked).
-- [ ] Devnet demo: mock KYC issuer credential → user receives attestation →
-      self-thaws their dAED account. One verification, reusable everywhere.
+- [x] Gate verifies **real SAS attestations** (`thaw_account_with_sas`):
+      trusted credential+schema policy on GateConfig, nonce-to-owner subject
+      binding, expiry check — e2e against the mainnet-dumped SAS program
+      (`pnpm e2e:gate:sas`), incl. mismatched-subject negative.
+- [ ] Devnet demo with a public mock-IDV credential + jurisdiction field in
+      the schema (field-level policy).
 
 ### 3. Confidential balances with a regulator auditor key
 
