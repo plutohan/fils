@@ -8,7 +8,8 @@
 import { address } from '@solana/kit';
 import { formatAed, parseAed } from '@fils/core';
 
-import { loadDaedMintState, loadOrCreateSigner, rpcFromEnv } from './common.js';
+import { rpcFromEnv } from './common.js';
+import { loadDaedMintState, loadOrCreateSigner } from '@fils/daed/node';
 import { mintDaedTo } from '@fils/daed';
 
 const [, , walletArg, amountArg] = process.argv;
