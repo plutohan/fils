@@ -1,0 +1,12 @@
+# Project-specific typos configuration.
+# "fils" is the minor unit of the UAE dirham (1 AED = 100 fils) and this
+# project's name; "dAED" is our devnet AED reference token symbol.
+[default.extend-words]
+fils = "fils"
+Fils = "Fils"
+daed = "daed"
+dAED = "dAED"
+DAED = "DAED"
+
+[default.extend-identifiers]
+dAed = "dAed"

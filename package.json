@@ -1,0 +1,16 @@
+{
+  "name": "fils-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Fils — the dirham (AED) layer for Solana payments",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm --recursive --filter './packages/*' run build",
+    "test": "pnpm --recursive --filter './packages/*' run test",
+    "e2e": "pnpm --filter @fils/scripts run e2e"
+  }
+}

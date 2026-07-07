@@ -1,0 +1,20 @@
+# Node
+node_modules/
+dist/
+.next/
+*.tsbuildinfo
+
+# Env & local state
+.env
+.env.local
+.fils-local/
+
+# Solana / Anchor
+programs/**/target/
+test-ledger/
+.anchor/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
