@@ -51,6 +51,28 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/agent402:
+    dependencies:
+      '@fils/core':
+        specifier: workspace:*
+        version: link:../core
+      '@fils/daed':
+        specifier: workspace:*
+        version: link:../daed
+      '@solana/kit':
+        specifier: ^6.0.1
+        version: 6.10.0(typescript@5.9.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.2
+      tsx:
+        specifier: ^4.20.0
+        version: 4.23.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/core:
     dependencies:
       '@solana/kit':

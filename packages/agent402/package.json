@@ -1,0 +1,23 @@
+{
+  "name": "@fils/agent402",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AED agentic payments demo: an x402-style HTTP 402 paywall settled in dAED on Solana",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "serve": "tsx src/serve.ts",
+    "e2e": "tsx src/e2e.ts"
+  },
+  "dependencies": {
+    "@fils/core": "workspace:*",
+    "@fils/daed": "workspace:*",
+    "@solana/kit": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3"
+  }
+}

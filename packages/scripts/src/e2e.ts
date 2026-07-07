@@ -23,8 +23,8 @@ import {
     guessClusterFromUrl,
 } from '@fils/core';
 
-import { airdropAndConfirm, rpcFromEnv } from './common.js';
 import { createDaedMint, mintDaedTo, payAedRequest } from '@fils/daed';
+import { airdropAndConfirm, rpcFromEnv } from '@fils/daed/node';
 
 const { rpc, rpcUrl } = rpcFromEnv();
 const cluster = guessClusterFromUrl(rpcUrl);

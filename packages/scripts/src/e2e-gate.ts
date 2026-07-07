@@ -33,8 +33,8 @@ import {
     revokeWallet,
     thawGatedAccount,
 } from '@fils/daed';
+import { airdropAndConfirm, rpcFromEnv } from '@fils/daed/node';
 
-import { airdropAndConfirm, rpcFromEnv } from './common.js';
 
 const { rpc, rpcUrl } = rpcFromEnv();
 const cluster = guessClusterFromUrl(rpcUrl);

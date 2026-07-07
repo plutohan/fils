@@ -15,9 +15,8 @@
 import { address } from '@solana/kit';
 import { guessClusterFromUrl } from '@fils/core';
 import { createDaedMint, type CreateDaedMintOptions } from '@fils/daed';
-import { loadOrCreateSigner, saveDaedMintState } from '@fils/daed/node';
+import { airdropAndConfirm, loadOrCreateSigner, rpcFromEnv, saveDaedMintState } from '@fils/daed/node';
 
-import { airdropAndConfirm, rpcFromEnv } from './common.js';
 
 const args = process.argv.slice(2);
 const options: CreateDaedMintOptions = {};
