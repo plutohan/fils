@@ -7,4 +7,15 @@ export {
     createDaedMint,
     mintDaedTo,
     payAedRequest,
+    type CreateDaedMintOptions,
 } from './ops.js';
+export {
+    DAED_GATE_PROGRAM_ADDRESS,
+    attestWallet,
+    deriveAttestationPda,
+    deriveGateConfigPda,
+    freezeGatedAccount,
+    initializeGate,
+    revokeWallet,
+    thawGatedAccount,
+} from './gate.js';

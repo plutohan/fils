@@ -540,6 +540,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "daed-gate"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
+
+[[package]]
 name = "daed-hook"
 version = "0.1.0"
 dependencies = [

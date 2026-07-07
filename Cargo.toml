@@ -1,5 +1,5 @@
 [workspace]
-members = ["programs/daed-hook"]
+members = ["programs/daed-gate", "programs/daed-hook"]
 resolver = "2"
 
 [profile.release]
