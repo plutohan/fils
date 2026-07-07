@@ -12,6 +12,7 @@
   "dependencies": {
     "@fils/core": "workspace:*",
     "@fils/daed": "workspace:*",
+    "@fils/einvoice": "workspace:*",
     "@solana/kit": "^6.0.1",
     "next": "^15.5.0",
     "qrcode": "^1.5.4",

@@ -16,6 +16,9 @@ importers:
       '@fils/daed':
         specifier: workspace:*
         version: link:../../packages/daed
+      '@fils/einvoice':
+        specifier: workspace:*
+        version: link:../../packages/einvoice
       '@solana/kit':
         specifier: ^6.0.1
         version: 6.10.0(typescript@5.9.3)
@@ -85,6 +88,25 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  packages/einvoice:
+    dependencies:
+      '@fils/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@solana/kit':
+        specifier: ^6.10.0
+        version: 6.10.0(typescript@5.9.3)
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@24.13.2)(tsx@4.23.0)
 
   packages/scripts:
     dependencies:
