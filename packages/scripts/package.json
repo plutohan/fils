@@ -1,0 +1,25 @@
+{
+  "name": "@fils/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Operational scripts for the Fils toolkit: create the dAED reference mint, run the faucet, run the end-to-end payment cycle",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "daed:create": "tsx src/create-daed.ts",
+    "daed:faucet": "tsx src/faucet.ts",
+    "e2e": "tsx src/e2e.ts"
+  },
+  "dependencies": {
+    "@fils/core": "workspace:*",
+    "@solana-program/system": "^0.12.2",
+    "@solana-program/token-2022": "^0.6.1",
+    "@solana/kit": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3"
+  }
+}
