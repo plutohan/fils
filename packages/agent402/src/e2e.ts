@@ -57,14 +57,21 @@ const body = paid.body as { pair?: string; inverseRate?: number };
 check(body.pair === 'AED/USD' && body.inverseRate === 3.6725, 'resource payload is the AED/USD rate');
 check(typeof paid.paidSignature === 'string', `settled on-chain: ${paid.paidSignature?.slice(0, 20)}…`);
 
-// 3. Replay protection: the same proof cannot buy a second read.
-const replayProof = Buffer.from(
+// 3. Replay protection: the exact proof that WAS paid cannot buy a second read.
+const usedProof = Buffer.from(JSON.stringify({ reference: paid.paidReference })).toString('base64');
+const replay = await fetch(url, { headers: { 'X-PAYMENT': usedProof } });
+const replayBody = (await replay.json()) as { error?: string };
+check(
+    replay.status === 402 && replayBody.error === 'Payment proof already used',
+    `used proof is rejected (status ${replay.status}: ${replayBody.error})`,
+);
+
+// 3b. An unpaid challenge's reference is also worthless.
+const unpaidProof = Buffer.from(
     JSON.stringify({ reference: challenge.accepts[0]?.reference }),
 ).toString('base64');
-// (the reference the agent actually paid is inside payAndFetch — replay the
-// full flow instead: re-request with a fresh unpaid challenge's reference)
-const replay = await fetch(url, { headers: { 'X-PAYMENT': replayProof } });
-check(replay.status === 402, `unpaid reference is rejected (status ${replay.status})`);
+const unpaidReplay = await fetch(url, { headers: { 'X-PAYMENT': unpaidProof } });
+check(unpaidReplay.status === 402, `unpaid reference is rejected (status ${unpaidReplay.status})`);
 
 // 4. Budget guard: the agent refuses prices above its limit.
 let refused = false;

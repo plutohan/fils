@@ -50,6 +50,17 @@ export function receiptToPintAeXml(input: ReceiptToPintAeInput): string {
             `expected the UAE standard 5% VAT rate (500 bps); got ${receipt.totals.vatBps}`,
         );
     }
+    if (
+        receipt.seller.trn !== undefined &&
+        receipt.seller.trn !== '' &&
+        supplier.trn !== undefined &&
+        receipt.seller.trn !== supplier.trn
+    ) {
+        throw new FilsError(
+            'INCONSISTENT_INPUT',
+            `receipt seller TRN (${receipt.seller.trn}) disagrees with supplier TRN (${supplier.trn})`,
+        );
+    }
 
     const grossFils = BigInt(receipt.totals.grossFils);
     const netFils = BigInt(receipt.totals.netFils);

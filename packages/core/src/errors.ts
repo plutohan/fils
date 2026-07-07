@@ -4,6 +4,7 @@ export type FilsErrorCode =
     | 'INVALID_ADDRESS'
     | 'INVALID_TOKEN'
     | 'INVALID_URL'
+    | 'INCONSISTENT_INPUT'
     | 'AMOUNT_OUT_OF_RANGE';
 
 export class FilsError extends Error {

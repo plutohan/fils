@@ -35,7 +35,9 @@ What's missing is the connective tissue. Fils is that tissue:
 | [`programs/daed-hook`](programs/daed-hook) | Token-2022 **transfer-hook allowlist program** — the same perimeter enforced on every transfer, for when per-transfer logic is genuinely required | AED issuers needing strict per-transfer control |
 | [`scripts`](packages/scripts) | Create **dAED**, a devnet AED reference token (Token-2022, 2 decimals = fils, metadata, freeze authority) + faucet | Developers who need AED to build against today |
 | [`@fils/core`](packages/core) | TypeScript SDK: AED token registry, fils-precise amounts with AR/EN formatting, Solana Pay-compatible payment requests, on-chain payment verification, UAE-e-invoice-aligned receipts | Payment app builders |
-| [`apps/demo`](apps/demo) | Merchant checkout / POS demo (Arabic RTL + English): QR → pay → verified receipt | Merchants & hackathon teams |
+| [`apps/demo`](apps/demo) | Merchant checkout / POS demo (Arabic RTL + English): QR → pay → verified receipt → downloadable **PINT AE e-invoice** | Merchants & hackathon teams |
+| [`@fils/einvoice`](packages/einvoice) | **UAE e-invoice XML** (Peppol PINT AE) from Fils receipts — mandate waves start Jan 2027 | VAT-registered merchants & their ASPs |
+| [`@fils/agent402`](packages/agent402) | **AED agentic payments**: an x402-style HTTP 402 paywall settled in dAED, with the agent-side pay-and-retry client | AI-agent & API builders |
 | [`docs/playbook.md`](docs/playbook.md) | **UAE Solana Payments Playbook** — PTSR, Federal Decree-Law 6/2025, VARA and free-zone carve-outs mapped to a Solana stack | Everyone shipping payments in the UAE |
 
 ## Why Solana

@@ -88,6 +88,11 @@ export function createAgent402Server(config: Agent402Config): Server {
     const ttl = config.challengeTtlMs ?? 5 * 60_000;
 
     const issueChallenge = (): PaymentChallenge => {
+        // Sweep expired challenges so unpaid probes cannot grow the map forever.
+        const now = Date.now();
+        for (const [reference, pending] of challenges) {
+            if (now > pending.expiresAt) challenges.delete(reference);
+        }
         const request = createPaymentRequest({
             recipient: config.seller,
             amountFils: config.priceFils,
@@ -146,9 +151,15 @@ export function createAgent402Server(config: Agent402Config): Server {
             respondJson(response, 402, { ...issueChallenge(), error: 'Payment proof already used' });
             return;
         }
+        // Mark BEFORE the async verification: two concurrent requests with the
+        // same proof must not both pass the check while one awaits the RPC
+        // (classic check-then-act race). Un-mark if verification fails so an
+        // honest client can retry once its payment lands.
+        pending.settled = true;
 
         const verification = await findPayment({ rpc: config.rpc, request: pending.request });
         if (verification.status !== 'confirmed') {
+            pending.settled = false;
             respondJson(response, 402, {
                 ...issueChallenge(),
                 error: `Payment not found on-chain (${verification.status})`,
@@ -156,7 +167,6 @@ export function createAgent402Server(config: Agent402Config): Server {
             return;
         }
 
-        pending.settled = true;
         response.setHeader(
             'X-PAYMENT-RESPONSE',
             Buffer.from(
@@ -197,7 +207,7 @@ export async function payAndFetch(
     wallet: KeyPairSigner,
     rpc: Agent402Rpc,
     options: { maxPriceFils: bigint },
-): Promise<{ status: number; body: unknown; paidSignature?: string }> {
+): Promise<{ status: number; body: unknown; paidSignature?: string; paidReference?: string }> {
     const first = await fetch(url);
     if (first.status !== 402) {
         return { status: first.status, body: await first.json() };
@@ -220,5 +230,10 @@ export async function payAndFetch(
 
     const proof = Buffer.from(JSON.stringify({ reference: accept.reference })).toString('base64');
     const retry = await fetch(url, { headers: { 'X-PAYMENT': proof } });
-    return { status: retry.status, body: await retry.json(), paidSignature: signature };
+    return {
+        status: retry.status,
+        body: await retry.json(),
+        paidSignature: signature,
+        paidReference: accept.reference,
+    };
 }

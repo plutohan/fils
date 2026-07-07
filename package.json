@@ -11,6 +11,8 @@
   "scripts": {
     "build": "pnpm --recursive --filter './packages/*' run build",
     "test": "pnpm --recursive --filter './packages/*' run test",
-    "e2e": "pnpm --filter @fils/scripts run e2e"
+    "e2e": "pnpm --filter @fils/scripts run e2e",
+    "e2e:gate": "pnpm --filter @fils/scripts run e2e:gate",
+    "e2e:402": "pnpm --filter @fils/agent402 run e2e"
   }
 }
