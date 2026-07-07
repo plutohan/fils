@@ -24,11 +24,36 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.13.2)(tsx@4.23.0)
 
+  packages/daed:
+    dependencies:
+      '@fils/core':
+        specifier: workspace:*
+        version: link:../core
+      '@solana-program/system':
+        specifier: ^0.12.2
+        version: 0.12.2(@solana/kit@6.10.0(typescript@5.9.3))
+      '@solana-program/token-2022':
+        specifier: ^0.6.1
+        version: 0.6.1(@solana/kit@6.10.0(typescript@5.9.3))(@solana/sysvars@6.10.0(typescript@5.9.3))
+      '@solana/kit':
+        specifier: ^6.0.1
+        version: 6.10.0(typescript@5.9.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/scripts:
     dependencies:
       '@fils/core':
         specifier: workspace:*
         version: link:../core
+      '@fils/daed':
+        specifier: workspace:*
+        version: link:../daed
       '@solana-program/system':
         specifier: ^0.12.2
         version: 0.12.2(@solana/kit@6.10.0(typescript@5.9.3))

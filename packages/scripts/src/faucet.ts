@@ -9,7 +9,7 @@ import { address } from '@solana/kit';
 import { formatAed, parseAed } from '@fils/core';
 
 import { loadDaedMintState, loadOrCreateSigner, rpcFromEnv } from './common.js';
-import { mintDaedTo } from './daed.js';
+import { mintDaedTo } from '@fils/daed';
 
 const [, , walletArg, amountArg] = process.argv;
 if (!walletArg) {

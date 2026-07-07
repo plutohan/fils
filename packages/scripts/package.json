@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fils/core": "workspace:*",
+    "@fils/daed": "workspace:*",
     "@solana-program/system": "^0.12.2",
     "@solana-program/token-2022": "^0.6.1",
     "@solana/kit": "^6.0.1"

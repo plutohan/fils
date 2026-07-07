@@ -5,17 +5,11 @@ import { fileURLToPath } from 'node:url';
 import {
     createKeyPairSignerFromPrivateKeyBytes,
     createSolanaRpc,
-    getBase64EncodedWireTransaction,
-    getSignatureFromTransaction,
     lamports,
     type Address,
     type KeyPairSigner,
     type Rpc,
-    type SendableTransaction,
-    type Signature,
     type SolanaRpcApi,
-    type Transaction,
-    type TransactionWithLifetime,
 } from '@solana/kit';
 
 /**
@@ -89,34 +83,3 @@ export async function airdropAndConfirm(rpc: ScriptRpc, recipient: Address, sol:
     throw new Error(`airdrop of ${sol} SOL to ${recipient} did not confirm in time`);
 }
 
-/**
- * Send a fully signed transaction and poll for confirmation. Polling (rather
- * than a websocket subscription) keeps the scripts dependency-light and works
- * identically against the local validator and public clusters.
- */
-export async function sendAndConfirm(
-    rpc: ScriptRpc,
-    transaction: SendableTransaction & Transaction & TransactionWithLifetime,
-): Promise<Signature> {
-    const signature = getSignatureFromTransaction(transaction);
-    await rpc
-        .sendTransaction(getBase64EncodedWireTransaction(transaction), {
-            encoding: 'base64',
-            preflightCommitment: 'confirmed',
-        })
-        .send();
-    for (let attempt = 0; attempt < 60; attempt++) {
-        const { value } = await rpc.getSignatureStatuses([signature]).send();
-        const status = value[0];
-        if (status) {
-            if (status.err !== null) {
-                throw new Error(`transaction ${signature} failed: ${JSON.stringify(status.err)}`);
-            }
-            if (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized') {
-                return signature;
-            }
-        }
-        await sleep(500);
-    }
-    throw new Error(`transaction ${signature} did not confirm in time`);
-}

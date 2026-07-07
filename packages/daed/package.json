@@ -1,0 +1,31 @@
+{
+  "name": "@fils/daed",
+  "version": "0.1.0",
+  "description": "dAED reference token operations for Solana: create the Token-2022 mint, issuer mint-to, and wallet-side payment of AED payment requests",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fils/core": "workspace:*",
+    "@solana-program/system": "^0.12.2",
+    "@solana-program/token-2022": "^0.6.1",
+    "@solana/kit": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "typescript": "^5.9.3"
+  }
+}

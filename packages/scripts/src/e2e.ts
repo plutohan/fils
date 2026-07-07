@@ -23,7 +23,7 @@ import {
 } from '@fils/core';
 
 import { airdropAndConfirm, clusterFromRpcUrl, rpcFromEnv } from './common.js';
-import { createDaedMint, mintDaedTo, payAedRequest } from './daed.js';
+import { createDaedMint, mintDaedTo, payAedRequest } from '@fils/daed';
 
 const { rpc, rpcUrl } = rpcFromEnv();
 const cluster = clusterFromRpcUrl(rpcUrl);

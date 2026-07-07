@@ -1,12 +1,6 @@
 import {
     AccountRole,
-    appendTransactionMessageInstructions,
-    createTransactionMessage,
     generateKeyPairSigner,
-    pipe,
-    setTransactionMessageFeePayerSigner,
-    setTransactionMessageLifetimeUsingBlockhash,
-    signTransactionMessageWithSigners,
     type Address,
     type Instruction,
     type KeyPairSigner,
@@ -27,27 +21,12 @@ import {
 } from '@solana-program/token-2022';
 import { AED_DECIMALS, type AedPaymentRequest } from '@fils/core';
 
-import { sendAndConfirm, type ScriptRpc } from './common.js';
+import { buildAndSend, type DaedRpc } from './tx.js';
 
 export const DAED_NAME = 'Devnet AED (Fils reference)';
 export const DAED_SYMBOL = 'dAED';
-export const DAED_METADATA_URI = 'https://raw.githubusercontent.com/fils-money/fils/main/packages/scripts/daed-metadata.json';
-
-async function buildAndSend(
-    rpc: ScriptRpc,
-    feePayer: KeyPairSigner,
-    instructions: readonly Instruction[],
-): Promise<Signature> {
-    const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: 'confirmed' }).send();
-    const transaction = await pipe(
-        createTransactionMessage({ version: 0 }),
-        message => setTransactionMessageFeePayerSigner(feePayer, message),
-        message => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, message),
-        message => appendTransactionMessageInstructions(instructions, message),
-        signTransactionMessageWithSigners,
-    );
-    return await sendAndConfirm(rpc, transaction);
-}
+export const DAED_METADATA_URI =
+    'https://raw.githubusercontent.com/fils-money/fils/main/packages/daed/daed-metadata.json';
 
 /**
  * Create the dAED reference mint: Token-2022, 2 decimals (raw amount = fils),
@@ -55,7 +34,7 @@ async function buildAndSend(
  * metadata program), and mint + freeze authority retained by the issuer, as
  * the CBUAE's Payment Token Services Regulation expects of an issuer.
  */
-export async function createDaedMint(rpc: ScriptRpc, issuer: KeyPairSigner): Promise<{ mint: Address; signature: Signature }> {
+export async function createDaedMint(rpc: DaedRpc, issuer: KeyPairSigner): Promise<{ mint: Address; signature: Signature }> {
     const mint = await generateKeyPairSigner();
 
     const metadataPointer = extension('MetadataPointer', {
@@ -111,7 +90,7 @@ export async function ataFor(mint: Address, owner: Address): Promise<Address> {
 
 /** Faucet: mint `fils` of dAED to `owner` (creating their ATA if needed). */
 export async function mintDaedTo(
-    rpc: ScriptRpc,
+    rpc: DaedRpc,
     issuer: KeyPairSigner,
     mint: Address,
     owner: Address,
@@ -142,7 +121,7 @@ export async function mintDaedTo(
  * read-only account so the merchant can find the payment on-chain.
  */
 export async function payAedRequest(
-    rpc: ScriptRpc,
+    rpc: DaedRpc,
     buyer: KeyPairSigner,
     request: AedPaymentRequest,
 ): Promise<Signature> {
