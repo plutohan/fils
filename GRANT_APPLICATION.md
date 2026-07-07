@@ -80,7 +80,7 @@ kit) rather than duplicating it.
 
 | # | Weeks | Deliverable | Amount |
 | --- | --- | --- | --- |
-| M1 | 1–3 | dAED + daed-hook live on **devnet** with on-chain hook e2e (allowlisted transfer passes, blocked transfer fails); hosted faucet; issuer design note | $3,000 |
+| M1 | 1–3 | dAED + daed-hook live on **devnet** with on-chain hook e2e (allowlisted transfer passes, blocked transfer fails); **Token ACL (sRFC37) configuration with a Gate Program that verifies Solana Attestation Service KYC attestations** (the Foundation-current compliance architecture); hosted faucet; issuer design note | $3,000 |
 | M2 | 4–6 | @fils/core v0.1 on npm; hosted Fils Café demo on devnet (AR/EN); 3-minute demo video; integration guide | $3,500 |
 | M3 | 7–9 | Playbook reviewed by a UAE virtual-assets law firm; issuer integration brief shared with Zand / AE Coin / RAKBank contacts; hands-on workshop at a Superteam UAE event (SEZ side-event); v0.1 mainnet-ready release | $3,500 |
 
@@ -88,6 +88,12 @@ Measurable outcomes: SDK on npm with public devnet demo; ≥1 AED issuer
 conversation opened with a concrete integration brief; ≥25 developers
 through the workshop; playbook published as the reference for "can I build
 this in the UAE?"; ≥3 external contributors.
+
+Beyond the grant ([ROADMAP.md](ROADMAP.md)): PINT AE e-invoice export for
+`FilsReceipt` (UAE e-invoicing pilot opened 1 July 2026; mandatory waves
+from Jan 2027), AED-denominated agentic payments on x402/MPP via the
+Foundation's pay-kit, and a confidential-balances dAED variant with a
+regulator auditor key.
 
 ## Budget notes
 

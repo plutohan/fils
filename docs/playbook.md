@@ -61,7 +61,8 @@ The PTSR reads like a Token-2022 configuration sheet:
 
 | PTSR requirement (issuer) | Token-2022 mechanism |
 | --- | --- |
-| Control of distribution (KYC'd holders) | TransferHook extension → allowlist program ([`daed-hook`](../programs/daed-hook)) |
+| Control of distribution (KYC'd holders) | **Token ACL (sRFC37)**: `DefaultAccountState=frozen` + Gate Program self-service thaw (recommended — transfers stay standard, DeFi-composable); or TransferHook → allowlist program ([`daed-hook`](../programs/daed-hook)) when logic must run on *every* transfer |
+| KYC once, reuse everywhere | [Solana Attestation Service](https://attest.solana.com/) — issuers (Sumsub, Civic, RNS.ID live on mainnet) attest KYC to a wallet; the Gate Program verifies the attestation instead of maintaining a bespoke allowlist |
 | Act on unlawful use / law-enforcement response | Freeze authority on the mint; `set_allowed(wallet, false)` |
 | Redemption at par, burn on redemption | Mint/burn authority against reserve ops |
 | AED denomination, fils precision | 2-decimal mint — raw integer amounts **are** fils |
@@ -107,9 +108,15 @@ receipts already work.
 - **Keep the regulated surface out of your codebase.** Let licensed
   issuers/ramps do issuance and conversion; your app should touch only
   payment requests, verification, and receipts.
-- **Design receipts for the e-invoicing mandate.** UAE e-invoicing is
-  phasing in from 2026–2027 (Peppol-based). A crypto payment does not exempt
-  you; it just changes the settlement evidence.
+- **Design receipts for the e-invoicing mandate.** UAE e-invoicing (Peppol
+  5-corner, PINT AE XML) is live: voluntary pilot since 1 July 2026,
+  mandatory for revenue ≥ AED 50M on 1 Jan 2027, < AED 50M on 1 Jul 2027,
+  B2G on 1 Oct 2027 — with Dh5,000/month penalties. A crypto payment does
+  not exempt you; it just changes the settlement evidence.
+- **Mind transfer-hook composability.** Some DeFi protocols blacklist hooked
+  tokens and multi-hop DEX routes can fail; wallets cover ~80% of Token-2022
+  but hooks and confidential transfers are the rough edges. Prefer Token ACL
+  for holder gating; reserve hooks for genuinely per-transfer logic.
 - **Free-zone products are a different game.** If your model needs USD
   stablecoins for payments, build it from DIFC/ADGM under their regimes and
   do not point it at mainland persons.
