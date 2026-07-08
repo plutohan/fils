@@ -20,7 +20,7 @@ import {
     getPreInitializeInstructionsForMintExtensions,
     getTransferCheckedInstruction,
 } from '@solana-program/token-2022';
-import { AED_DECIMALS, type AedPaymentRequest } from '@fils/core';
+import { AED_DECIMALS, FilsError, type AedPaymentRequest } from '@fils/core';
 
 import { buildAndSend, type DaedRpc } from './tx.js';
 
@@ -160,6 +160,16 @@ export async function payAedRequest(
     buyer: KeyPairSigner,
     request: AedPaymentRequest,
 ): Promise<Signature> {
+    // This wallet path builds Token-2022 ATAs and transfers. A token registered
+    // under a different program (e.g. legacy SPL Token) would otherwise derive
+    // the wrong ATA and fail opaquely, so reject it explicitly and early.
+    if (request.token.tokenProgram !== TOKEN_2022_PROGRAM_ADDRESS) {
+        throw new FilsError(
+            'INVALID_TOKEN',
+            `payAedRequest supports Token-2022 AED tokens only; ${request.token.symbol} is registered under program ${request.token.tokenProgram}`,
+        );
+    }
+
     const mint = request.token.mint;
     const source = await ataFor(mint, buyer.address);
     const destination = await ataFor(mint, request.recipient);
