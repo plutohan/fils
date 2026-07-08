@@ -1,0 +1,6 @@
+{
+  "name": "Devnet AED (Fils reference)",
+  "symbol": "dAED",
+  "description": "Unbacked devnet reference implementation of a CBUAE-shaped AED payment token on Solana (Token-2022, 2 decimals = fils). Part of the Fils toolkit — not a real dirham, carries no value.",
+  "external_url": "https://github.com/plutohan/fils"
+}

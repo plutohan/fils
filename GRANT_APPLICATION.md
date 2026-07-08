@@ -3,7 +3,7 @@
 ## Project
 
 **Fils — the dirham layer for Solana payments**
-Open-source (Apache-2.0): <https://github.com/fils-money/fils> *(update link on publication)*
+Open-source (Apache-2.0): <https://github.com/plutohan/fils>
 
 One-liner: *Everything needed to issue, accept, and verify AED payments on
 Solana — a regulation-shaped reference token, an SDK, a merchant checkout,
@@ -129,7 +129,7 @@ on its own applications.
 
 ## Links
 
-- Repository: *(GitHub link after publication)*
+- Repository: <https://github.com/plutohan/fils>
 - Demo video: *(M2)*
 - Playbook: `docs/playbook.md`
 - Live demo: *(devnet URL, M2)*

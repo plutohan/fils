@@ -8,6 +8,7 @@ extend-ignore-re = ["[1-9A-HJ-NP-Za-km-z]{32,88}"]
 [default.extend-words]
 fils = "fils"
 Fils = "Fils"
+MENA = "MENA"
 daed = "daed"
 dAED = "dAED"
 DAED = "DAED"

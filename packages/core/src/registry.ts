@@ -88,6 +88,6 @@ export function describeDaedMint(mint: Address | string, cluster: SolanaCluster)
         tokenProgram: TOKEN_2022_PROGRAM_ADDRESS,
         issuer: 'Fils project (unbacked reference token)',
         regulatoryStatus: 'reference',
-        website: 'https://github.com/fils-money/fils',
+        website: 'https://github.com/plutohan/fils',
     };
 }

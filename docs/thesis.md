@@ -54,7 +54,10 @@ Zand following — that would cap the upside to the developer/agentic niches.
 ## H5 — Positioning: extend, don't duplicate
 
 **Status: HOLDS.** Still no competing AED-on-Solana toolkit found
-(StableHacks-class projects are generic institutional stablecoin infra).
+(StableHacks-class projects are generic institutional stablecoin infra;
+the Palm USD × Superteam UAE hackathon orbit produced USD-anchored
+remittance *apps*, not dirham infrastructure — full breakdown in
+[competitive-landscape.md](competitive-landscape.md)).
 Foundation tooling (commerce-kit, pay-kit, Token ACL, SAS) keeps absorbing
 the generic layers — exactly why Fils stays the thin dirham-specific layer
 on top and tracks Foundation guidance (hook → Token ACL migration already
