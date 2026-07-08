@@ -18,7 +18,7 @@
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
-import type { Address, KeyPairSigner } from '@solana/kit';
+import type { Address, GetSlotApi, KeyPairSigner, Rpc } from '@solana/kit';
 import {
     createPaymentRequest,
     describeDaedMint,
@@ -32,8 +32,8 @@ import {
 } from '@fils/core';
 import { payAedRequest, type DaedRpc } from '@fils/daed';
 
-/** Needs both the payment-sending and the payment-verifying RPC surfaces. */
-export type Agent402Rpc = DaedRpc & PaymentVerificationRpc;
+/** Needs the payment-sending, payment-verifying, and current-slot RPC surfaces. */
+export type Agent402Rpc = DaedRpc & PaymentVerificationRpc & Rpc<GetSlotApi>;
 
 export interface Agent402Config {
     rpc: Agent402Rpc;
@@ -69,6 +69,8 @@ interface PendingChallenge {
     request: AedPaymentRequest;
     expiresAt: number;
     settled: boolean;
+    /** Slot at which the challenge was issued; the payment must be at or after it. */
+    minSlot: bigint;
 }
 
 /** The paid resource: a toy AED/USD oracle. The paywall is the point. */
@@ -87,12 +89,16 @@ export function createAgent402Server(config: Agent402Config): Server {
     const challenges = new Map<string, PendingChallenge>();
     const ttl = config.challengeTtlMs ?? 5 * 60_000;
 
-    const issueChallenge = (): PaymentChallenge => {
+    const issueChallenge = async (): Promise<PaymentChallenge> => {
         // Sweep expired challenges so unpaid probes cannot grow the map forever.
         const now = Date.now();
         for (const [reference, pending] of challenges) {
             if (now > pending.expiresAt) challenges.delete(reference);
         }
+        // The payment must land at or after the challenge is issued, so record
+        // the current slot as the verification floor (blocks replaying an
+        // earlier payment for the same seller/amount).
+        const minSlot = await config.rpc.getSlot().send();
         const request = createPaymentRequest({
             recipient: config.seller,
             amountFils: config.priceFils,
@@ -104,6 +110,7 @@ export function createAgent402Server(config: Agent402Config): Server {
             request,
             expiresAt: Date.now() + ttl,
             settled: false,
+            minSlot,
         });
         return {
             x402Version: 1,
@@ -138,17 +145,17 @@ export function createAgent402Server(config: Agent402Config): Server {
 
         const proof = decodePaymentHeader(request.headers['x-payment']);
         if (proof === undefined) {
-            respondJson(response, 402, issueChallenge());
+            respondJson(response, 402, await issueChallenge());
             return;
         }
 
         const pending = challenges.get(proof.reference);
         if (!pending || Date.now() > pending.expiresAt) {
-            respondJson(response, 402, { ...issueChallenge(), error: 'Unknown or expired reference' });
+            respondJson(response, 402, { ...(await issueChallenge()), error: 'Unknown or expired reference' });
             return;
         }
         if (pending.settled) {
-            respondJson(response, 402, { ...issueChallenge(), error: 'Payment proof already used' });
+            respondJson(response, 402, { ...(await issueChallenge()), error: 'Payment proof already used' });
             return;
         }
         // Mark BEFORE the async verification: two concurrent requests with the
@@ -157,7 +164,11 @@ export function createAgent402Server(config: Agent402Config): Server {
         // honest client can retry once its payment lands.
         pending.settled = true;
 
-        const verification = await findPayment({ rpc: config.rpc, request: pending.request });
+        const verification = await findPayment({
+            rpc: config.rpc,
+            request: pending.request,
+            minSlot: pending.minSlot,
+        });
         if (verification.status !== 'confirmed') {
             pending.settled = false;
             respondJson(response, 402, {
