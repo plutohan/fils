@@ -172,7 +172,7 @@ export function createAgent402Server(config: Agent402Config): Server {
         if (verification.status !== 'confirmed') {
             pending.settled = false;
             respondJson(response, 402, {
-                ...issueChallenge(),
+                ...(await issueChallenge()),
                 error: `Payment not found on-chain (${verification.status})`,
             });
             return;

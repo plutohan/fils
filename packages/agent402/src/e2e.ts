@@ -66,12 +66,18 @@ check(
     `used proof is rejected (status ${replay.status}: ${replayBody.error})`,
 );
 
-// 3b. An unpaid challenge's reference is also worthless.
+// 3b. An unpaid challenge's reference is also worthless, and the rejection
+// body is still a well-formed challenge (issueChallenge is async).
 const unpaidProof = Buffer.from(
     JSON.stringify({ reference: challenge.accepts[0]?.reference }),
 ).toString('base64');
 const unpaidReplay = await fetch(url, { headers: { 'X-PAYMENT': unpaidProof } });
+const unpaidReplayBody = (await unpaidReplay.json()) as PaymentChallenge;
 check(unpaidReplay.status === 402, `unpaid reference is rejected (status ${unpaidReplay.status})`);
+check(
+    unpaidReplayBody.accepts?.[0]?.paymentUrl?.startsWith('solana:') === true,
+    'rejected 402 still carries a full challenge body',
+);
 
 // 4. Budget guard: the agent refuses prices above its limit.
 let refused = false;
