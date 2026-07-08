@@ -77,6 +77,12 @@ export function buildReceipt(input: BuildReceiptInput): FilsReceipt {
         if (line.quantity <= 0 || !Number.isInteger(line.quantity)) {
             throw new FilsError('INVALID_AMOUNT', `invalid quantity ${line.quantity} for "${line.description}"`);
         }
+        if (line.unitFils < 0n) {
+            throw new FilsError(
+                'INVALID_AMOUNT',
+                `unit price cannot be negative (${line.unitFils} fils) for "${line.description}"`,
+            );
+        }
         const totalFils = line.unitFils * BigInt(line.quantity);
         return {
             description: line.description,

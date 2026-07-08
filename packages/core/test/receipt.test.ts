@@ -74,4 +74,16 @@ describe('buildReceipt', () => {
             }),
         ).toThrowError(FilsError);
     });
+
+    it('rejects negative unit prices', () => {
+        expect(() =>
+            buildReceipt({
+                receiptNumber: 'FILS-0005',
+                issuedAt: new Date(),
+                seller: { name: 'Fils Café' },
+                lines: [{ description: 'Refund hack', quantity: 1, unitFils: -500n }],
+                payment: paymentStub(),
+            }),
+        ).toThrowError(FilsError);
+    });
 });

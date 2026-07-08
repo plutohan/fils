@@ -95,4 +95,25 @@ describe('receiptToPintAeXml', () => {
         const tampered = { ...receipt, totals: { ...receipt.totals, vatBps: 0 } };
         expect(() => receiptToPintAeXml({ receipt: tampered, supplier: SUPPLIER })).toThrowError(FilsError);
     });
+
+    it('rejects a receipt whose gross total does not match its lines', () => {
+        const receipt = receiptWith([{ description: 'Karak chai', quantity: 3, unitFils: 150n }]);
+        const tampered: FilsReceipt = { ...receipt, totals: { ...receipt.totals, grossFils: '9999' } };
+        expect(() => receiptToPintAeXml({ receipt: tampered, supplier: SUPPLIER })).toThrowError(FilsError);
+    });
+
+    it('rejects a receipt with a tampered (negative) line total', () => {
+        const receipt = receiptWith([{ description: 'Karak chai', quantity: 3, unitFils: 150n }]);
+        const tampered: FilsReceipt = {
+            ...receipt,
+            lines: [{ description: 'Karak chai', quantity: 3, unitFils: '150', totalFils: '-450' }],
+        };
+        expect(() => receiptToPintAeXml({ receipt: tampered, supplier: SUPPLIER })).toThrowError(FilsError);
+    });
+
+    it('rejects a receipt whose VAT split does not reconcile with gross', () => {
+        const receipt = receiptWith([{ description: 'Karak chai', quantity: 3, unitFils: 150n }]);
+        const tampered: FilsReceipt = { ...receipt, totals: { ...receipt.totals, netFils: '999' } };
+        expect(() => receiptToPintAeXml({ receipt: tampered, supplier: SUPPLIER })).toThrowError(FilsError);
+    });
 });

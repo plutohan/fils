@@ -13,7 +13,7 @@
  * Field-complete validation against the Ministry's data dictionary is the
  * ASP's job — always validate with your ASP before relying on it.
  */
-import { FilsError, type FilsReceipt } from '@fils/core';
+import { FilsError, vatBreakdownFromGross, type FilsReceipt } from '@fils/core';
 
 export interface PintAeParty {
     /** Registered legal name. */
@@ -62,9 +62,11 @@ export function receiptToPintAeXml(input: ReceiptToPintAeInput): string {
         );
     }
 
-    const grossFils = BigInt(receipt.totals.grossFils);
-    const netFils = BigInt(receipt.totals.netFils);
-    const vatFils = BigInt(receipt.totals.vatFils);
+    // Do not trust the serialized totals: recompute gross from the lines and
+    // the net/VAT split from gross, and reject any receipt that does not
+    // reconcile. A hand-crafted or tampered receipt cannot smuggle negative
+    // lines or a mismatched taxable/payable amount into the invoice.
+    const { grossFils, netFils, vatFils } = assertReceiptTotalsConsistent(receipt);
     const lines = reconcileLineNets(receipt, netFils);
 
     const issueDate = receipt.issuedAt.slice(0, 10);
@@ -142,6 +144,60 @@ export function receiptToPintAeXml(input: ReceiptToPintAeInput): string {
 
     xml.push('</Invoice>');
     return xml.join('\n');
+}
+
+/** Parse a non-negative integer fils string, rejecting anything else. */
+function parseFils(value: string, field: string): bigint {
+    if (!/^\d+$/.test(value)) {
+        throw new FilsError('INCONSISTENT_INPUT', `${field} is not a non-negative fils integer: "${value}"`);
+    }
+    return BigInt(value);
+}
+
+/**
+ * Recompute the invoice totals from the receipt's own lines and reject the
+ * receipt if the serialized totals do not match. Guards against negative or
+ * inconsistent line amounts and a gross/net/VAT split that was tampered with
+ * after `buildReceipt` produced it.
+ */
+function assertReceiptTotalsConsistent(receipt: FilsReceipt): {
+    grossFils: bigint;
+    netFils: bigint;
+    vatFils: bigint;
+} {
+    const grossFils = parseFils(receipt.totals.grossFils, 'totals.grossFils');
+    const netFils = parseFils(receipt.totals.netFils, 'totals.netFils');
+    const vatFils = parseFils(receipt.totals.vatFils, 'totals.vatFils');
+
+    let lineSum = 0n;
+    for (const line of receipt.lines) {
+        if (!Number.isInteger(line.quantity) || line.quantity <= 0) {
+            throw new FilsError('INCONSISTENT_INPUT', `line "${line.description}" has invalid quantity ${line.quantity}`);
+        }
+        const unit = parseFils(line.unitFils, `line "${line.description}" unitFils`);
+        const total = parseFils(line.totalFils, `line "${line.description}" totalFils`);
+        if (total !== unit * BigInt(line.quantity)) {
+            throw new FilsError(
+                'INCONSISTENT_INPUT',
+                `line "${line.description}" total ${total} does not equal unit ${unit} × qty ${line.quantity}`,
+            );
+        }
+        lineSum += total;
+    }
+    if (lineSum !== grossFils) {
+        throw new FilsError('INCONSISTENT_INPUT', `line totals (${lineSum}) do not sum to gross (${grossFils})`);
+    }
+    if (grossFils <= 0n) {
+        throw new FilsError('INVALID_AMOUNT', 'invoice gross total must be positive');
+    }
+    const expected = vatBreakdownFromGross(grossFils, VAT_RATE_BPS);
+    if (netFils !== expected.netFils || vatFils !== expected.vatFils) {
+        throw new FilsError(
+            'INCONSISTENT_INPUT',
+            `receipt VAT breakdown (net ${netFils}, VAT ${vatFils}) does not reconcile with gross ${grossFils}`,
+        );
+    }
+    return { grossFils, netFils, vatFils };
 }
 
 interface ReconciledLine {
