@@ -32,11 +32,21 @@ export interface CreatePaymentRequestInput {
     label?: string;
     message?: string;
     memo?: string;
-    /** Provide to reuse an existing reference; omitted → freshly generated. */
+    /**
+     * Resume an existing reference; omitted → a fresh single-use one.
+     * References MUST be single-use: reusing one across orders lets an older
+     * on-chain payment of the same recipient/mint/amount satisfy a new order
+     * (pair verification with `findPayment`'s `minSlot`). Only pass this to
+     * keep verifying one specific in-flight request.
+     */
     reference?: Address | string;
 }
 
-/** Generate a unique payment reference (random 32 bytes as a base58 address). */
+/**
+ * Generate a unique, single-use payment reference (random 32 bytes as a
+ * base58 address). A fresh reference per payment is what makes reference-based
+ * on-chain verification unambiguous; never reuse one across orders.
+ */
 export function generateReference(): Address {
     const bytes = crypto.getRandomValues(new Uint8Array(32));
     return getAddressDecoder().decode(bytes);
