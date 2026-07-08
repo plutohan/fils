@@ -1,10 +1,10 @@
-# daed-gate — attestation-gated permissionless thaw (Token ACL pattern)
+# daed-gate: attestation-gated permissionless thaw (Token ACL pattern)
 
 The compliance perimeter for a regulated AED token in the shape the Solana
 Foundation now recommends (**sRFC37 / Token ACL**): instead of intercepting
 every transfer with a hook, the mint is created with
 `DefaultAccountState = Frozen` and its **freeze authority is handed to this
-program's GateConfig PDA**. A new token account is born frozen — unusable —
+program's GateConfig PDA**. A new token account is born frozen (unusable)
 until it is thawed through the gate, and the thaw only succeeds when the
 account owner holds a valid KYC attestation. After that, transfers are
 completely standard: no per-transfer overhead, no DeFi composability loss.
@@ -23,9 +23,9 @@ default to this gate.
 ## Roles (split the way SAS splits them)
 
 - **Issuer** (mint authority): runs `initialize_gate`, may `freeze_wallet_account`.
-- **Attestor** (an IDV provider in production — Sumsub/Civic-style):
+- **Attestor** (an IDV provider in production, Sumsub/Civic-style):
   `attest` / `revoke` wallets, may `freeze_wallet_account`.
-- **Anyone**: `thaw_account` — self-service onboarding, no issuer round-trip.
+- **Anyone**: `thaw_account` (self-service onboarding, no issuer round-trip).
 
 Revocation (`revoke`) and enforcement (`freeze_wallet_account`) are separate
 compliance acts: revoking stops future thaws; freezing stops an existing
@@ -38,7 +38,7 @@ account. Re-attesting restores a revoked wallet (re-KYC).
 | `initialize_gate(attestor)` | issuer | record attestor; verify freeze authority was handed to the gate PDA |
 | `attest(wallet, expiry)` | attestor | create/refresh the KYC entry `["kyc", mint, wallet]` |
 | `revoke(wallet)` | attestor | mark the entry revoked |
-| `thaw_account` | — (permissionless) | CPI-thaw a token account iff its owner's entry is valid |
+| `thaw_account` | None (permissionless) | CPI-thaw a token account iff its owner's entry is valid |
 | `freeze_wallet_account` | issuer or attestor | CPI-freeze a token account (enforcement) |
 
 ## Flow
@@ -49,7 +49,7 @@ pnpm --filter @fils/scripts daed:create -- --default-frozen
 pnpm --filter @fils/scripts e2e:gate   # full on-chain scenario incl. negatives
 ```
 
-## Solana Attestation Service mode (v2 — delivered)
+## Solana Attestation Service mode (v2, delivered)
 
 Initialize the gate with an SAS policy (`credential` + `schema`) and
 `thaw_account_with_sas` accepts **real SAS attestations** instead of the
@@ -61,7 +61,7 @@ IDV provider (Sumsub/Civic-style), thaw anywhere this gate trusts them.
 
 Notes: SAS-side revocation = closing the attestation (thaw then fails
 naturally); the enforcement `freeze_wallet_account` stays with the
-issuer/attestor. The attestation `data` payload is not inspected — field-
+issuer/attestor. The attestation `data` payload is not inspected; field-
 level policy belongs in the choice of schema. `expiry <= now` is rejected
 (conservative if a schema uses 0-as-never). Verified end-to-end against the
 mainnet-dumped SAS program on a local validator (`pnpm e2e:gate:sas`).

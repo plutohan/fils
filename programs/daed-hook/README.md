@@ -1,10 +1,10 @@
-# daed-hook — licensed-holder allowlist as a Token-2022 transfer hook
+# daed-hook: licensed-holder allowlist as a Token-2022 transfer hook
 
 A reference implementation of the control a CBUAE-licensed dirham payment
 token issuer needs on-chain: **a positive-permission distribution perimeter**.
 Attached to a Token-2022 mint via the TransferHook extension, this program is
-invoked by the token program itself on *every* transfer — wallet-to-wallet,
-DEX fill, CPI — and fails the transfer unless the destination owner holds an
+invoked by the token program itself on *every* transfer (wallet-to-wallet,
+DEX fill, CPI) and fails the transfer unless the destination owner holds an
 active allowlist entry created by the issuer.
 
 ## Why this maps to the PTSR
@@ -21,7 +21,7 @@ unlawful use. On Token-2022 that decomposes into:
 | Redemption at par | issuer burn/mint against reserves | issuer ops |
 
 A permissive issuer can simply ship the mint **without** the hook (dAED's
-default) — the point of this program is that the strict reading is *also*
+default); the point of this program is that the strict reading is *also*
 just configuration on Solana, not custom infrastructure.
 
 ## Design
@@ -33,18 +33,18 @@ just configuration on Solana, not custom infrastructure.
   `["extra-account-metas", mint]`, declaring one extra account resolved from
   the *destination token account's owner* (account-data seed, offset 32,
   length 32). Wallets and clients resolve it automatically per the SPL
-  transfer-hook interface — no custom client code to pay someone.
+  transfer-hook interface: no custom client code to pay someone.
 - **`transferring` check**: Execute rejects invocations that don't come from
   inside a real Token-2022 transfer (the TransferHookAccount extension flag).
 - **Authority**: both `initialize_extra_account_meta_list` and `set_allowed`
-  are gated to the mint authority — the issuer.
+  are gated to the mint authority, the issuer.
 
 ## Instructions
 
 | Instruction | Discriminator | Signer | Effect |
 | --- | --- | --- | --- |
 | `initialize_extra_account_meta_list` | SPL interface | mint authority | create the meta list PDA for the mint |
-| `execute` (transfer hook) | SPL interface | — (CPI from Token-2022) | require active allowlist entry for destination owner |
+| `execute` (transfer hook) | SPL interface | None (CPI from Token-2022) | require active allowlist entry for destination owner |
 | `set_allowed(wallet, allowed)` | Anchor | mint authority | create/flip a wallet's entry |
 
 ## Build & deploy

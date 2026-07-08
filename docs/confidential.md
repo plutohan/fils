@@ -1,4 +1,4 @@
-# Confidential dAED — private amounts, auditable by design
+# Confidential dAED: private amounts, auditable by design
 
 Token-2022's ConfidentialTransfer extension hides **transfer amounts and
 balances** (ElGamal-encrypted, ZK-proof-verified) while account addresses
@@ -6,7 +6,7 @@ stay public. For a regulated AED payment token this is the interesting shape:
 
 - **Not a privacy token.** The CBUAE prohibits privacy *tokens*; here
   identities, the mint, freeze controls, and the gate perimeter all remain
-  fully enforceable — only amounts are shielded from the public.
+  fully enforceable; only amounts are shielded from the public.
 - **Auditable.** The mint can carry a **global auditor ElGamal key**: every
   confidential transfer must additionally encrypt its amount under that key,
   so the auditor (issuer compliance, or a supervisor) can decrypt any amount
@@ -40,7 +40,7 @@ Extensions
 
 `autoApproveNewAccounts` is set to `true` (any holder can configure their
 account for confidential use). An issuer wanting to gate confidential usage
-separately from holding can flip this to manual approval — that is a
+separately from holding can flip this to manual approval; that is a
 one-line change in `createDaedMint`.
 
 ## Using it (today's flow)

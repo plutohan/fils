@@ -1,9 +1,9 @@
-# Fils Roadmap — beyond the MVP
+# Fils Roadmap: beyond the MVP
 
 Research-driven development plan (July 2026). Each item names the signal that
 motivates it. Tiers are ordered by expected impact per unit of effort.
 
-## Tier 1 — Compliance architecture v2 (align with where the ecosystem moved)
+## Tier 1: Compliance architecture v2 (align with where the ecosystem moved)
 
 ### 1. Token ACL (sRFC37) as the recommended perimeter
 
@@ -18,7 +18,7 @@ the right tool only when logic must run on *every* transfer.
       via `createDaedMint({ defaultFrozen: true })`); `daed-hook` kept as the
       strict per-transfer variant with the trade-off table in its README.
 - [x] Ship a **gate program** that thaws an account iff the wallet holds a
-      valid KYC attestation — `programs/daed-gate`, with attestor/issuer role
+      valid KYC attestation: `programs/daed-gate`, with attestor/issuer role
       separation and an on-chain e2e (`pnpm e2e:gate`) covering the negative
       paths. *(v1 uses its own attestation registry; SAS verification below
       is the v2.)*
@@ -27,12 +27,12 @@ the right tool only when logic must run on *every* transfer.
 
 SAS is live on mainnet (Foundation-backed, Solana Identity Group) with real
 KYC issuers already attesting: Sumsub, Civic, RNS.ID. A real AED issuer would
-not maintain a bespoke allowlist — it would trust attestations from approved
+not maintain a bespoke allowlist; it would trust attestations from approved
 IDV providers.
 
 - [x] Gate verifies **real SAS attestations** (`thaw_account_with_sas`):
       trusted credential+schema policy on GateConfig, nonce-to-owner subject
-      binding, expiry check — e2e against the mainnet-dumped SAS program
+      binding, expiry check; e2e against the mainnet-dumped SAS program
       (`pnpm e2e:gate:sas`), incl. mismatched-subject negative.
 - [ ] Devnet demo with a public mock-IDV credential + jurisdiction field in
       the schema (field-level policy).
@@ -42,7 +42,7 @@ IDV providers.
 Token-2022 confidential transfers support an optional **global auditor
 ElGamal key** on the mint: amounts hidden from the public, decryptable by the
 auditor. That is exactly the shape a CBUAE-supervised token wants (and
-distinct from prohibited "privacy tokens" — flag to counsel). Agave v4.2's
+distinct from prohibited "privacy tokens"; flag to counsel). Agave v4.2's
 transaction format v1 is expected to make confidential transfers single-tx.
 
 - [x] dAED confidential variant: `daed:create -- --confidential [auditor]`
@@ -52,7 +52,7 @@ transaction format v1 is expected to make confidential transfers single-tx.
       sees AED amounts (waiting on the Agave v4.2 single-tx flow for a clean
       demo).
 
-## Tier 2 — Ride the two waves that just started
+## Tier 2: Ride the two waves that just started
 
 ### 4. PINT AE e-invoice export (`@fils/einvoice`)
 
@@ -73,7 +73,7 @@ Agentic 402 payments crossed 100M transactions on Base in three quarters;
 Solana is a first-class settlement rail in both x402 (Coinbase/Cloudflare)
 and MPP (Stripe/Tempo, Solana supported at launch), with the Foundation's
 `pay-kit` shipping server/client SDKs in nine languages. Even the UAE's own
-DDSC announcement names "machine-to-machine and AI" as a target use case —
+DDSC announcement names "machine-to-machine and AI" as a target use case,
 but nobody demos agents paying in **dirhams**.
 
 - [x] `@fils/agent402`: an AED-denominated 402 paywall + agent client
@@ -84,7 +84,7 @@ but nobody demos agents paying in **dirhams**.
 - [ ] Position at SEZ: "the dirham layer for agentic commerce"
       (docs/workshop.md is the session).
 
-## Tier 3 — Distribution & adoption
+## Tier 3: Distribution & adoption
 
 ### 6. Issuer brief aimed at Zand (AEDZ)
 
@@ -95,9 +95,9 @@ property-sale flows. Deliver through Superteam UAE channels.
 
 ### 7. Events pipeline
 
-- Solana Economic Zone: Dubai (twice yearly, Superteam UAE) — workshop +
+- Solana Economic Zone: Dubai (twice yearly, Superteam UAE), workshop +
   live Fils Café demo with real wallets.
-- Institutional-stablecoin hackathons (StableHacks-class, Colosseum) —
+- Institutional-stablecoin hackathons (StableHacks-class, Colosseum):
   Fils as base infrastructure; MVP requirement already satisfied.
 
 ### 8. Corridor positioning (research-informed, not a build item yet)
