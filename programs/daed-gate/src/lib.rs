@@ -25,7 +25,9 @@ use anchor_spl::token_interface::{
     FreezeAccount, Mint, ThawAccount, TokenAccount, TokenInterface,
     freeze_account as token_freeze_account, thaw_account as token_thaw_account,
 };
-use solana_attestation_service_client::accounts::Attestation as SasAttestation;
+use solana_attestation_service_client::accounts::{
+    Attestation as SasAttestation, Credential as SasCredential, Schema as SasSchema,
+};
 
 declare_id!("HfYBcwBTbHdtNmAD1Kcu8WSxwECfoSX3ELc77qEnzqWG");
 
@@ -119,14 +121,31 @@ pub mod daed_gate {
     /// issued under the credential + schema this gate trusts (a real IDV
     /// provider's KYC passport). Verified: SAS-owned, Attestation-typed,
     /// matching credential and schema, bound to the owner via the nonce,
-    /// not expired.
+    /// not expired — and the credential/schema are checked in their **current**
+    /// state (schema not paused, signer still authorized), not just as they
+    /// were embedded in the attestation at issuance.
     pub fn thaw_account_with_sas(ctx: Context<ThawWithSas>) -> Result<()> {
         let config = &ctx.accounts.gate_config;
         let credential = config.sas_credential.ok_or(DaedGateError::SasNotConfigured)?;
         let schema = config.sas_schema.ok_or(DaedGateError::SasNotConfigured)?;
 
+        // The passed credential and schema accounts must be exactly the gate's
+        // trusted ones and still owned by SAS. Key equality binds them to the
+        // gate config so their *live* state can be trusted below.
+        require!(
+            ctx.accounts.sas_credential.key() == credential,
+            DaedGateError::SasWrongCredential
+        );
+        require!(ctx.accounts.sas_schema.key() == schema, DaedGateError::SasWrongSchema);
+        require!(
+            ctx.accounts.sas_credential.owner == &SAS_PROGRAM_ID,
+            DaedGateError::SasWrongOwner
+        );
+        require!(ctx.accounts.sas_schema.owner == &SAS_PROGRAM_ID, DaedGateError::SasWrongOwner);
+
         let info = &ctx.accounts.sas_attestation;
         require!(info.owner == &SAS_PROGRAM_ID, DaedGateError::SasWrongOwner);
+        let now = Clock::get()?.unix_timestamp;
         {
             let data = info.try_borrow_data()?;
             require!(
@@ -147,9 +166,29 @@ pub mod daed_gate {
                 attestation.nonce.to_bytes() == ctx.accounts.token_account.owner.to_bytes(),
                 DaedGateError::SasSubjectMismatch
             );
+            require!(attestation.expiry > now, DaedGateError::AttestationExpired);
+
+            // Current policy state. Expiry alone does not cover a schema paused
+            // or a signer removed from the credential *after* a (possibly
+            // compromised) attestation was issued, so check both live here.
+            let schema_data = ctx.accounts.sas_schema.try_borrow_data()?;
+            let schema_account =
+                SasSchema::from_bytes(&schema_data).map_err(|_| DaedGateError::SasMalformed)?;
             require!(
-                attestation.expiry > Clock::get()?.unix_timestamp,
-                DaedGateError::AttestationExpired
+                schema_account.credential.to_bytes() == credential.to_bytes(),
+                DaedGateError::SasWrongSchema
+            );
+            require!(!schema_account.is_paused, DaedGateError::SasSchemaPaused);
+
+            let credential_data = ctx.accounts.sas_credential.try_borrow_data()?;
+            let credential_account = SasCredential::from_bytes(&credential_data)
+                .map_err(|_| DaedGateError::SasMalformed)?;
+            require!(
+                credential_account
+                    .authorized_signers
+                    .iter()
+                    .any(|signer| signer.to_bytes() == attestation.signer.to_bytes()),
+                DaedGateError::SasSignerNotAuthorized
             );
         }
 
@@ -260,6 +299,13 @@ pub struct ThawWithSas<'info> {
     /// discriminator, trusted credential+schema, nonce == token account
     /// owner, not expired.
     pub sas_attestation: UncheckedAccount<'info>,
+    /// CHECK: verified in the handler: must equal the gate's trusted SAS
+    /// credential and be SAS-owned; its authorized-signers list is read to
+    /// confirm the attestation's signer is still authorized.
+    pub sas_credential: UncheckedAccount<'info>,
+    /// CHECK: verified in the handler: must equal the gate's trusted SAS
+    /// schema and be SAS-owned; read to confirm the schema is not paused.
+    pub sas_schema: UncheckedAccount<'info>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
@@ -335,4 +381,8 @@ pub enum DaedGateError {
     SasWrongSchema,
     #[msg("SAS attestation is not bound to the token account owner")]
     SasSubjectMismatch,
+    #[msg("the SAS schema is currently paused")]
+    SasSchemaPaused,
+    #[msg("the SAS attestation signer is no longer authorized on the credential")]
+    SasSignerNotAuthorized,
 }

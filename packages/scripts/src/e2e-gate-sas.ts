@@ -142,8 +142,8 @@ const createAta = async (owner: typeof buyer.address) => {
 };
 const buyerAta = await createAta(buyer.address);
 const merchantAta = await createAta(merchant.address);
-await thawGatedAccountWithSas(rpc, buyer, mint, buyerAta, buyerAttestation);
-await thawGatedAccountWithSas(rpc, buyer, mint, merchantAta, merchantAttestation);
+await thawGatedAccountWithSas(rpc, buyer, mint, buyerAta, buyerAttestation, credential, schema);
+await thawGatedAccountWithSas(rpc, buyer, mint, merchantAta, merchantAttestation, credential, schema);
 check(true, 'SAS-attested wallets thawed permissionlessly');
 
 await mintDaedTo(rpc, issuer, mint, buyer.address, parseAed('100'));
@@ -160,10 +160,13 @@ check(verification.status === 'confirmed', `payment verified on SAS-gated mint (
 step("5. NEGATIVE: someone else's attestation does not thaw you");
 const outsiderAta = await createAta(outsider.address);
 await expectFailure('thaw with mismatched-subject attestation fails', () =>
-    thawGatedAccountWithSas(rpc, buyer, mint, outsiderAta, buyerAttestation),
+    thawGatedAccountWithSas(rpc, buyer, mint, outsiderAta, buyerAttestation, credential, schema),
 );
 await expectFailure('registry-thaw without a registry entry fails', () =>
     thawGatedAccount(rpc, buyer, mint, outsiderAta, outsider.address),
+);
+await expectFailure('thaw with an untrusted credential account fails', () =>
+    thawGatedAccountWithSas(rpc, buyer, mint, buyerAta, buyerAttestation, outsider.address, schema),
 );
 
 if (failures > 0) {

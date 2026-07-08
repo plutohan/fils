@@ -197,9 +197,11 @@ export async function thawGatedAccount(
 
 /**
  * PERMISSIONLESS thaw via a **Solana Attestation Service** attestation: the
- * gate must have been initialized with a `SasGatePolicy`, and
- * `sasAttestation` must be a live SAS attestation whose nonce is the token
- * account's owner.
+ * gate must have been initialized with a `SasGatePolicy`, and `sasAttestation`
+ * must be a live SAS attestation whose nonce is the token account's owner. Pass
+ * the gate's trusted `sasCredential` and `sasSchema` accounts too: the program
+ * reads their current state to reject a paused schema or an attestation whose
+ * signer is no longer authorized on the credential.
  */
 export async function thawGatedAccountWithSas(
     rpc: DaedRpc,
@@ -207,6 +209,8 @@ export async function thawGatedAccountWithSas(
     mint: Address,
     tokenAccount: Address,
     sasAttestation: Address,
+    sasCredential: Address,
+    sasSchema: Address,
 ): Promise<Signature> {
     const instruction: Instruction = {
         programAddress: DAED_GATE_PROGRAM_ADDRESS,
@@ -215,6 +219,8 @@ export async function thawGatedAccountWithSas(
             { address: mint, role: AccountRole.READONLY },
             { address: await deriveGateConfigPda(mint), role: AccountRole.READONLY },
             { address: sasAttestation, role: AccountRole.READONLY },
+            { address: sasCredential, role: AccountRole.READONLY },
+            { address: sasSchema, role: AccountRole.READONLY },
             { address: TOKEN_2022_PROGRAM_ADDRESS, role: AccountRole.READONLY },
         ],
         data: instructionData(DISCRIMINATORS.thawAccountWithSas),
