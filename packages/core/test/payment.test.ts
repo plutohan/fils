@@ -43,6 +43,13 @@ describe('createPaymentRequest', () => {
             FilsError,
         );
     });
+
+    it('rejects a token that is not 2-decimal (fils) precision', () => {
+        const sixDecimals = { ...token, decimals: 6 };
+        expect(() => createPaymentRequest({ recipient: MERCHANT, amountFils: 1250n, token: sixDecimals })).toThrowError(
+            FilsError,
+        );
+    });
 });
 
 describe('parseSolanaPayUrl', () => {

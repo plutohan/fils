@@ -1,6 +1,6 @@
 import { address, getAddressDecoder, type Address } from '@solana/kit';
 
-import { filsToDecimalString, parseAed } from './amount.js';
+import { AED_DECIMALS, filsToDecimalString, parseAed } from './amount.js';
 import { FilsError } from './errors.js';
 import type { AedTokenInfo } from './registry.js';
 
@@ -55,6 +55,15 @@ export function generateReference(): Address {
 export function createPaymentRequest(input: CreatePaymentRequestInput): AedPaymentRequest {
     if (input.amountFils <= 0n) {
         throw new FilsError('INVALID_AMOUNT', 'payment amount must be positive');
+    }
+    // The whole SDK treats raw token units as fils, so the amount and its
+    // on-chain verification are only correct for a 2-decimal token. Reject
+    // anything else here rather than silently encoding a wrong amount.
+    if (input.token.decimals !== AED_DECIMALS) {
+        throw new FilsError(
+            'INVALID_TOKEN',
+            `${input.token.symbol} must be a 2-decimal (fils) AED token; got ${input.token.decimals} decimals`,
+        );
     }
     const recipient = toAddress(input.recipient, 'recipient');
     const reference = input.reference === undefined ? generateReference() : toAddress(input.reference, 'reference');
