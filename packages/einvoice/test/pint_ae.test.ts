@@ -16,6 +16,7 @@ const SUPPLIER: PintAeParty = {
 };
 
 function receiptWith(lines: { description: string; quantity: number; unitFils: bigint }[]): FilsReceipt {
+    const amountFils = lines.reduce((total, line) => total + line.unitFils * BigInt(line.quantity), 0n);
     return buildReceipt({
         receiptNumber: 'FILS-0042',
         issuedAt: new Date('2026-07-07T12:00:00Z'),
@@ -27,6 +28,7 @@ function receiptWith(lines: { description: string; quantity: number; unitFils: b
             recipient: MERCHANT,
             reference: REFERENCE,
             signature: SIGNATURE,
+            amountFils,
             slot: 99n,
             blockTime: 1780000000n,
         },

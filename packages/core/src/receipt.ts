@@ -39,6 +39,8 @@ export interface FilsReceipt {
         readonly recipient: Address;
         readonly reference: Address;
         readonly signature: Signature;
+        /** Amount actually received on-chain for this signature, in fils. */
+        readonly amountFils: string;
         readonly slot: string;
         readonly blockTime: string | null;
     };
@@ -63,6 +65,8 @@ export interface BuildReceiptInput {
         recipient: Address;
         reference: Address;
         signature: Signature;
+        /** Amount the payment was verified to have delivered on-chain, in fils. */
+        amountFils: bigint;
         slot: bigint;
         blockTime: bigint | null;
     };
@@ -92,6 +96,15 @@ export function buildReceipt(input: BuildReceiptInput): FilsReceipt {
         };
     });
     const grossFils = lines.reduce((total, line) => total + BigInt(line.totalFils), 0n);
+    // Bind the receipt to its on-chain proof: the verified payment must cover
+    // the receipt total, so a signature that paid AED 1 cannot back an AED 100
+    // receipt. (A larger amount is accepted as an overpayment / tip.)
+    if (input.payment.amountFils < grossFils) {
+        throw new FilsError(
+            'INCONSISTENT_INPUT',
+            `verified payment of ${input.payment.amountFils} fils does not cover the receipt total of ${grossFils} fils`,
+        );
+    }
     const vat = vatBreakdownFromGross(grossFils, input.vatBps ?? UAE_VAT_BPS);
 
     return {
@@ -114,6 +127,7 @@ export function buildReceipt(input: BuildReceiptInput): FilsReceipt {
             recipient: input.payment.recipient,
             reference: input.payment.reference,
             signature: input.payment.signature,
+            amountFils: input.payment.amountFils.toString(),
             slot: input.payment.slot.toString(),
             blockTime: input.payment.blockTime === null ? null : input.payment.blockTime.toString(),
         },

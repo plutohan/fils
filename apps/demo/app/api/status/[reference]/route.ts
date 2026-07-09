@@ -30,6 +30,7 @@ export async function GET(
             recipient: order.request.recipient,
             reference: order.request.reference,
             signature: verification.signature,
+            amountFils: verification.amountFils,
             slot: verification.slot,
             blockTime: verification.blockTime,
         },

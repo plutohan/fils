@@ -97,6 +97,7 @@ const receipt = buildReceipt({
         recipient: merchant.address,
         reference: request.reference,
         signature: verification.signature,
+        amountFils: verification.amountFils,
         slot: verification.slot,
         blockTime: verification.blockTime,
     },
