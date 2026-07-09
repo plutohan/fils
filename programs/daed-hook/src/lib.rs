@@ -15,7 +15,9 @@
 //! seed at offset 32 of the token account).
 //!
 //! Reference implementation for the Fils toolkit — audit before any mainnet
-//! use.
+//! use. Known limitation (reference scope): the mint authority administering
+//! the allowlist is a single Ed25519 signer, not an SPL multisig or governance
+//! PDA; a production issuer would adapt this.
 
 use anchor_lang::{
     prelude::*,
@@ -167,12 +169,17 @@ pub struct InitializeExtraAccountMetaList<'info> {
 
 #[derive(Accounts)]
 pub struct TransferHook<'info> {
-    #[account(token::mint = mint, token::authority = owner)]
+    // Validate the source only by mint. The interface's 4th account is the
+    // transfer *authority*, which for a delegate, vault, or DEX transfer is not
+    // the source token owner, so constraining `token::authority = owner` here
+    // would reject otherwise valid transfers before the allowlist check.
+    #[account(token::mint = mint)]
     pub source_token: InterfaceAccount<'info, TokenAccount>,
     pub mint: InterfaceAccount<'info, Mint>,
     #[account(token::mint = mint)]
     pub destination_token: InterfaceAccount<'info, TokenAccount>,
-    /// CHECK: source token account owner; may be any signer or PDA.
+    /// CHECK: the transfer authority (owner or delegate); not used for gating,
+    /// which keys off the destination owner's allowlist entry.
     pub owner: UncheckedAccount<'info>,
     /// CHECK: canonical ExtraAccountMetaList PDA for this mint.
     #[account(seeds = [b"extra-account-metas", mint.key().as_ref()], bump)]
