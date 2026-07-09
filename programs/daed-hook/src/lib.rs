@@ -25,9 +25,10 @@ use anchor_lang::{
 use anchor_spl::{
     token_2022::spl_token_2022::{
         extension::{
-            BaseStateWithExtensions, PodStateWithExtensions, transfer_hook::TransferHookAccount,
+            BaseStateWithExtensions, PodStateWithExtensions,
+            transfer_hook::{TransferHook as MintTransferHook, TransferHookAccount},
         },
-        pod::PodAccount,
+        pod::{PodAccount, PodMint},
     },
     token_interface::{Mint, TokenAccount},
 };
@@ -56,6 +57,25 @@ pub mod daed_hook {
     pub fn initialize_extra_account_meta_list(
         ctx: Context<InitializeExtraAccountMetaList>,
     ) -> Result<()> {
+        // Only wire up the allowlist for a mint whose Token-2022 TransferHook
+        // extension actually points to this program. Otherwise the perimeter
+        // could be "set up" for a mint whose transfers never invoke this hook,
+        // so nothing is enforced.
+        {
+            let mint_info = ctx.accounts.mint.to_account_info();
+            let mint_data = mint_info.try_borrow_data()?;
+            let mint_state = PodStateWithExtensions::<PodMint>::unpack(&mint_data)
+                .map_err(|_| DaedHookError::MintHookMismatch)?;
+            let hook = mint_state
+                .get_extension::<MintTransferHook>()
+                .map_err(|_| DaedHookError::MintHookMismatch)?;
+            let hook_program = Option::<Pubkey>::from(hook.program_id);
+            require!(
+                hook_program.map(|program| program.to_bytes()) == Some(crate::ID.to_bytes()),
+                DaedHookError::MintHookMismatch
+            );
+        }
+
         let extra_account_metas = vec![ExtraAccountMeta::new_with_seeds(
             &[
                 Seed::Literal { bytes: ALLOW_SEED.to_vec() },
@@ -206,4 +226,6 @@ pub enum DaedHookError {
     NotTransferring,
     #[msg("signer is not the mint authority")]
     AuthorityMismatch,
+    #[msg("the mint's transfer-hook program is not this program")]
+    MintHookMismatch,
 }
