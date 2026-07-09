@@ -75,6 +75,18 @@ describe('buildReceipt', () => {
         ).toThrowError(FilsError);
     });
 
+    it('rejects quantities beyond safe-integer precision', () => {
+        expect(() =>
+            buildReceipt({
+                receiptNumber: 'FILS-0006',
+                issuedAt: new Date(),
+                seller: { name: 'Fils Café' },
+                lines: [{ description: 'Too many', quantity: Number.MAX_SAFE_INTEGER + 2, unitFils: 100n }],
+                payment: paymentStub(),
+            }),
+        ).toThrowError(FilsError);
+    });
+
     it('rejects negative unit prices', () => {
         expect(() =>
             buildReceipt({

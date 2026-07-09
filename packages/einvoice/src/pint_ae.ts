@@ -171,7 +171,7 @@ function assertReceiptTotalsConsistent(receipt: FilsReceipt): {
 
     let lineSum = 0n;
     for (const line of receipt.lines) {
-        if (!Number.isInteger(line.quantity) || line.quantity <= 0) {
+        if (!Number.isSafeInteger(line.quantity) || line.quantity <= 0) {
             throw new FilsError('INCONSISTENT_INPUT', `line "${line.description}" has invalid quantity ${line.quantity}`);
         }
         const unit = parseFils(line.unitFils, `line "${line.description}" unitFils`);

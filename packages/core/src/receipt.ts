@@ -74,7 +74,7 @@ export function buildReceipt(input: BuildReceiptInput): FilsReceipt {
         throw new FilsError('INVALID_AMOUNT', 'a receipt needs at least one line');
     }
     const lines: FilsReceiptLine[] = input.lines.map(line => {
-        if (line.quantity <= 0 || !Number.isInteger(line.quantity)) {
+        if (line.quantity <= 0 || !Number.isSafeInteger(line.quantity)) {
             throw new FilsError('INVALID_AMOUNT', `invalid quantity ${line.quantity} for "${line.description}"`);
         }
         if (line.unitFils < 0n) {
