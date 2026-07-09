@@ -19,6 +19,14 @@
 //! this logic as a Gate Program.
 //!
 //! Reference implementation for the Fils toolkit — audit before mainnet use.
+//!
+//! Known limitations (reference scope, by design):
+//! - Gating is enforced at **thaw** (onboarding) plus explicit `freeze`, not
+//!   continuously per transfer. Once thawed, an account keeps working after its
+//!   attestation expires or is revoked until `freeze_wallet_account` is called.
+//!   For continuous per-transfer enforcement use the `daed-hook` variant.
+//! - Admin authorities (issuer, attestor) are single Ed25519 signers, not SPL
+//!   multisig or governance PDAs; a production issuer would adapt these.
 
 use anchor_lang::{prelude::*, solana_program::program_option::COption};
 use anchor_spl::{
