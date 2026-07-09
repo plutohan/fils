@@ -25,6 +25,7 @@ import {
     filsToDecimalString,
     findPayment,
     formatAed,
+    parseAed,
     parseSolanaPayUrl,
     type AedPaymentRequest,
     type AedTokenInfo,
@@ -240,10 +241,23 @@ export async function payAndFetch(
     }
 
     const challenge = (await first.json()) as PaymentChallenge;
+    if (challenge.x402Version !== 1) {
+        throw new Error(`unsupported x402 version ${challenge.x402Version}`);
+    }
     const accept = challenge.accepts[0];
+    if (accept.scheme !== 'solana-aed-reference') {
+        throw new Error(`unsupported payment scheme ${accept.scheme}`);
+    }
     const parsed = parseSolanaPayUrl(accept.paymentUrl);
     if (parsed.amountFils === undefined || parsed.amountFils > options.maxPriceFils) {
         throw new Error(`price ${parsed.amountFils} exceeds the agent's budget ${options.maxPriceFils}`);
+    }
+    // The URL amount must also honour the challenge's own advertised ceiling,
+    // so a challenge cannot quote one price while its URL charges another.
+    if (parsed.amountFils > parseAed(accept.maxAmountRequired)) {
+        throw new Error(
+            `payment URL amount ${parsed.amountFils} exceeds the challenge maxAmountRequired ${accept.maxAmountRequired}`,
+        );
     }
     // The paymentUrl is what a wallet would actually pay, so bind the machine
     // fields to it: a challenge must not budget-check with one URL while

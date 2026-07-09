@@ -115,6 +115,45 @@ describe('createAgent402Server', () => {
         }
     });
 
+    it('refuses (agent side) a challenge whose URL charges more than its advertised max', async () => {
+        const wallet = await generateKeyPairSigner();
+        const reference = 'SysvarC1ock11111111111111111111111111111111';
+        const badChallenge: PaymentChallenge = {
+            x402Version: 1,
+            error: 'Payment required',
+            accepts: [
+                {
+                    scheme: 'solana-aed-reference',
+                    network: 'localnet',
+                    asset: MINT,
+                    payTo: SELLER,
+                    maxAmountRequired: '0.25',
+                    reference: address(reference),
+                    // URL charges 0.50 while the challenge advertises 0.25.
+                    paymentUrl: `solana:${SELLER}?amount=0.50&spl-token=${MINT}&reference=${reference}`,
+                    description: 'AED/USD oracle read',
+                    maxTimeoutSeconds: 300,
+                },
+            ],
+        };
+        vi.stubGlobal('fetch', () =>
+            Promise.resolve(
+                new Response(JSON.stringify(badChallenge), {
+                    status: 402,
+                    headers: { 'content-type': 'application/json' },
+                }),
+            ),
+        );
+        try {
+            // Under the caller's 1.00 global budget, but over the challenge's own max.
+            await expect(
+                payAndFetch('http://unused.test/', wallet, {} as Agent402Rpc, { maxPriceFils: 100n }),
+            ).rejects.toThrow(/maxAmountRequired/);
+        } finally {
+            vi.unstubAllGlobals();
+        }
+    });
+
     it('serves one resource per signature even if it is tagged with several references', async () => {
         await withServer(oneSignatureRpc, async url => {
             const refA = await newReference(url);
