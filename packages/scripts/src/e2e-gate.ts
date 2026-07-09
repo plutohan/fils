@@ -143,6 +143,12 @@ await expectFailure('re-thaw after revocation fails', () =>
     thawGatedAccount(rpc, buyer, mint, buyerAta, buyer.address),
 );
 
+step('8. NEGATIVE: a gate cannot be attached to a non-default-frozen mint');
+const { mint: plainMint } = await createDaedMint(rpc, issuer, {}); // not default-frozen
+await expectFailure('gate init on a non-default-frozen mint fails', () =>
+    initializeGate(rpc, issuer, plainMint, attestor.address),
+);
+
 if (failures > 0) {
     console.error(`\n❌ gate e2e: ${failures} check(s) failed`);
     process.exit(1);

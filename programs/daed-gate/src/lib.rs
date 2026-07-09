@@ -21,9 +21,19 @@
 //! Reference implementation for the Fils toolkit — audit before mainnet use.
 
 use anchor_lang::{prelude::*, solana_program::program_option::COption};
-use anchor_spl::token_interface::{
-    FreezeAccount, Mint, ThawAccount, TokenAccount, TokenInterface,
-    freeze_account as token_freeze_account, thaw_account as token_thaw_account,
+use anchor_spl::{
+    token_2022::spl_token_2022::{
+        extension::{
+            BaseStateWithExtensions, PodStateWithExtensions,
+            default_account_state::DefaultAccountState,
+        },
+        pod::PodMint,
+        state::AccountState,
+    },
+    token_interface::{
+        FreezeAccount, Mint, ThawAccount, TokenAccount, TokenInterface,
+        freeze_account as token_freeze_account, thaw_account as token_thaw_account,
+    },
 };
 use solana_attestation_service_client::accounts::{
     Attestation as SasAttestation, Credential as SasCredential, Schema as SasSchema,
@@ -63,6 +73,25 @@ pub mod daed_gate {
             sas_credential.is_some() == sas_schema.is_some(),
             DaedGateError::SasPolicyIncomplete
         );
+
+        // The whole gate rests on new token accounts being born frozen
+        // (Token-2022 DefaultAccountState = Frozen). Enforce it here so a gate
+        // can never be attached to a mint whose accounts are usable without a
+        // thaw, which would silently bypass the KYC perimeter.
+        {
+            let mint_info = ctx.accounts.mint.to_account_info();
+            let mint_data = mint_info.try_borrow_data()?;
+            let mint_state = PodStateWithExtensions::<PodMint>::unpack(&mint_data)
+                .map_err(|_| DaedGateError::MintNotDefaultFrozen)?;
+            let default_state = mint_state
+                .get_extension::<DefaultAccountState>()
+                .map_err(|_| DaedGateError::MintNotDefaultFrozen)?;
+            require!(
+                default_state.state == AccountState::Frozen as u8,
+                DaedGateError::MintNotDefaultFrozen
+            );
+        }
+
         let config = &mut ctx.accounts.gate_config;
         config.mint = ctx.accounts.mint.key();
         config.issuer = ctx.accounts.payer.key();
@@ -385,4 +414,6 @@ pub enum DaedGateError {
     SasSchemaPaused,
     #[msg("the SAS attestation signer is no longer authorized on the credential")]
     SasSignerNotAuthorized,
+    #[msg("the mint is not default-frozen (DefaultAccountState must be Frozen)")]
+    MintNotDefaultFrozen,
 }
