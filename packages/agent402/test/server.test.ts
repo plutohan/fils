@@ -1,8 +1,8 @@
-import { address } from '@solana/kit';
+import { address, generateKeyPairSigner } from '@solana/kit';
 import { describeDaedMint } from '@fils/core';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { createAgent402Server, type Agent402Rpc, type PaymentChallenge } from '../src/server.js';
+import { createAgent402Server, payAndFetch, type Agent402Rpc, type PaymentChallenge } from '../src/server.js';
 
 const SELLER = address('J7t2yiWmYA8Ka9WWSYD7Yyw7tCUnQx3F9nUV5S2Wrooj');
 const MINT = address('So11111111111111111111111111111111111111112');
@@ -75,6 +75,44 @@ describe('createAgent402Server', () => {
             expect(body.accepts?.[0]?.paymentUrl?.startsWith('solana:')).toBe(true);
             expect(body.error).toContain('Payment not found');
         });
+    });
+
+    it('refuses (agent side) a challenge whose fields do not match its payment URL', async () => {
+        const wallet = await generateKeyPairSigner();
+        const reference = 'SysvarC1ock11111111111111111111111111111111';
+        const badChallenge: PaymentChallenge = {
+            x402Version: 1,
+            error: 'Payment required',
+            accepts: [
+                {
+                    scheme: 'solana-aed-reference',
+                    network: 'localnet',
+                    asset: MINT,
+                    // payTo differs from the payment URL's recipient (SELLER).
+                    payTo: address('Vote111111111111111111111111111111111111111'),
+                    maxAmountRequired: '0.25',
+                    reference: address(reference),
+                    paymentUrl: `solana:${SELLER}?amount=0.25&spl-token=${MINT}&reference=${reference}`,
+                    description: 'AED/USD oracle read',
+                    maxTimeoutSeconds: 300,
+                },
+            ],
+        };
+        vi.stubGlobal('fetch', () =>
+            Promise.resolve(
+                new Response(JSON.stringify(badChallenge), {
+                    status: 402,
+                    headers: { 'content-type': 'application/json' },
+                }),
+            ),
+        );
+        try {
+            await expect(
+                payAndFetch('http://unused.test/', wallet, {} as Agent402Rpc, { maxPriceFils: 100n }),
+            ).rejects.toThrow(/payTo/);
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 
     it('serves one resource per signature even if it is tagged with several references', async () => {

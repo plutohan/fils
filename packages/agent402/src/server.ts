@@ -245,11 +245,23 @@ export async function payAndFetch(
     if (parsed.amountFils === undefined || parsed.amountFils > options.maxPriceFils) {
         throw new Error(`price ${parsed.amountFils} exceeds the agent's budget ${options.maxPriceFils}`);
     }
+    // The paymentUrl is what a wallet would actually pay, so bind the machine
+    // fields to it: a challenge must not budget-check with one URL while
+    // steering payment to a different recipient, token, or reference.
+    if (parsed.recipient !== accept.payTo) {
+        throw new Error("challenge payTo does not match its payment URL's recipient");
+    }
+    if (parsed.splToken !== accept.asset) {
+        throw new Error("challenge asset does not match its payment URL's token");
+    }
+    if (!parsed.references.includes(accept.reference)) {
+        throw new Error('challenge reference is not present in its payment URL');
+    }
 
     const signature = await payAedRequest(rpc, wallet, {
-        recipient: accept.payTo,
+        recipient: parsed.recipient,
         amountFils: parsed.amountFils,
-        token: describeDaedMint(accept.asset, accept.network as AedTokenInfo['cluster']),
+        token: describeDaedMint(parsed.splToken, accept.network as AedTokenInfo['cluster']),
         reference: accept.reference,
         url: accept.paymentUrl,
     });
