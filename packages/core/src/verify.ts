@@ -26,6 +26,16 @@ export type PaymentVerification =
           status: 'amount-mismatch';
           signature: Signature;
           amountFils: bigint;
+      }
+    | {
+          /**
+           * The scan hit `maxSignatures` before the eligible window was
+           * exhausted, so the payment can be neither confirmed nor definitively
+           * ruled out (e.g. reference spam pushed it past the cap). Not a
+           * definitive "unpaid": retry, raise `maxSignatures`, or supply
+           * `minSlot`.
+           */
+          status: 'indeterminate';
       };
 
 export interface FindPaymentInput {
@@ -75,6 +85,9 @@ export async function findPayment(input: FindPaymentInput): Promise<PaymentVerif
     // Paginate newest-first through every reference-tagged signature in the
     // eligible window, not just the first page: a confirmed payment is
     // returned as soon as it is found, so decoy transactions cannot hide it.
+    // "not-found" is only returned once the window is fully scanned (an older
+    // signature seen, or signatures exhausted); hitting the cap first is
+    // reported as `indeterminate`, never a definitive "unpaid".
     while (scanned < maxSignatures) {
         const limit = Math.min(pageSize, maxSignatures - scanned);
         const page = await rpc
@@ -83,13 +96,15 @@ export async function findPayment(input: FindPaymentInput): Promise<PaymentVerif
                 ...(before !== undefined ? { before } : {}),
             })
             .send();
-        if (page.length === 0) break;
+        // No (more) signatures reference this payment: definitively not found.
+        if (page.length === 0) return mismatch ?? { status: 'not-found' };
 
         for (const entry of page) {
             scanned += 1;
             before = entry.signature;
             // Signatures are newest-first; once one predates the eligible
-            // window, every remaining (older) one does too — stop here.
+            // window, every remaining (older) one does too, so the window is
+            // fully scanned — this is definitive.
             if (minSlot !== undefined && entry.slot < minSlot) {
                 return mismatch ?? { status: 'not-found' };
             }
@@ -115,10 +130,13 @@ export async function findPayment(input: FindPaymentInput): Promise<PaymentVerif
             mismatch ??= { status: 'amount-mismatch', signature: entry.signature, amountFils: received };
         }
 
-        if (page.length < limit) break;
+        // A short page means the reference has no more signatures: definitive.
+        if (page.length < limit) return mismatch ?? { status: 'not-found' };
     }
 
-    return mismatch ?? { status: 'not-found' };
+    // Reached the scan cap without exhausting the window. The payment may be
+    // buried beyond the cap (reference spam), so do not claim it is unpaid.
+    return { status: 'indeterminate' };
 }
 
 interface TokenBalance {

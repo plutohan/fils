@@ -99,4 +99,18 @@ describe('findPayment', () => {
         const ungated = await findPayment({ rpc: mockRpc(entries), request });
         expect(ungated.status).toBe('confirmed');
     });
+
+    it('reports indeterminate when the scan cap is hit before the window is exhausted', async () => {
+        // More non-paying decoys than the cap, and no minSlot floor: the scan
+        // stops at the cap without proving the payment absent, so it must not
+        // claim not-found.
+        const entries: Entry[] = Array.from({ length: 6 }, (_, i) => ({
+            signature: `decoy-${i}`,
+            slot: BigInt(200 - i),
+            err: null,
+            delta: 0n,
+        }));
+        const result = await findPayment({ rpc: mockRpc(entries), request, maxSignatures: 3, pageSize: 3 });
+        expect(result.status).toBe('indeterminate');
+    });
 });
