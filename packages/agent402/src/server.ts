@@ -87,6 +87,10 @@ function paidResource(): unknown {
 
 export function createAgent402Server(config: Agent402Config): Server {
     const challenges = new Map<string, PendingChallenge>();
+    // Signatures already spent on a resource. One on-chain payment settles
+    // exactly one challenge, even if the payer tagged the transfer with
+    // several references.
+    const consumedSignatures = new Set<string>();
     const ttl = config.challengeTtlMs ?? 5 * 60_000;
 
     const issueChallenge = async (): Promise<PaymentChallenge> => {
@@ -177,6 +181,17 @@ export function createAgent402Server(config: Agent402Config): Server {
             });
             return;
         }
+        // A given signature can satisfy only one challenge: a single transfer
+        // may carry multiple reference keys, and each would otherwise verify
+        // against the same signature and buy a separate resource.
+        if (consumedSignatures.has(verification.signature)) {
+            respondJson(response, 402, {
+                ...(await issueChallenge()),
+                error: 'Payment already applied to another request',
+            });
+            return;
+        }
+        consumedSignatures.add(verification.signature);
 
         response.setHeader(
             'X-PAYMENT-RESPONSE',
