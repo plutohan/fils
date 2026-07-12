@@ -130,6 +130,11 @@ on its own applications.
 ## Links
 
 - Repository: <https://github.com/plutohan/fils>
+- Deployed on **devnet** (verifiable now):
+  - dAED mint `59YMGgi9UwUMJt7dMbhumQKno3rdyf9paNyArutxybr1`
+  - `daed-gate` `HfYBcwBTbHdtNmAD1Kcu8WSxwECfoSX3ELc77qEnzqWG`
+  - `daed-hook` `WVoJTCXkkLWip4rSP3ho3N9bAoZdcAsoHJEGtjmqkU1`
+  - [Solana Explorer (devnet)](https://explorer.solana.com/address/59YMGgi9UwUMJt7dMbhumQKno3rdyf9paNyArutxybr1?cluster=devnet)
 - Demo video: *(M2)*
 - Playbook: `docs/playbook.md`
-- Live demo: *(devnet URL, M2)*
+- Hosted demo: *(devnet URL, M2)*

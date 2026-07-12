@@ -78,6 +78,21 @@ pnpm --filter demo dev
 # http://localhost:3000 (pick items, get a Solana Pay QR, pay from a wallet)
 ```
 
+## Live on devnet
+
+The reference token and both compliance programs are deployed and verifiable on
+Solana **devnet** right now:
+
+| What | Address | Explorer |
+| --- | --- | --- |
+| dAED reference mint (Token-2022) | `59YMGgi9UwUMJt7dMbhumQKno3rdyf9paNyArutxybr1` | [view](https://explorer.solana.com/address/59YMGgi9UwUMJt7dMbhumQKno3rdyf9paNyArutxybr1?cluster=devnet) |
+| `daed-gate` program (Token ACL / SAS) | `HfYBcwBTbHdtNmAD1Kcu8WSxwECfoSX3ELc77qEnzqWG` | [view](https://explorer.solana.com/address/HfYBcwBTbHdtNmAD1Kcu8WSxwECfoSX3ELc77qEnzqWG?cluster=devnet) |
+| `daed-hook` program (transfer-hook allowlist) | `WVoJTCXkkLWip4rSP3ho3N9bAoZdcAsoHJEGtjmqkU1` | [view](https://explorer.solana.com/address/WVoJTCXkkLWip4rSP3ho3N9bAoZdcAsoHJEGtjmqkU1?cluster=devnet) |
+
+`@fils/core` ships the devnet dAED as a built-in registry entry
+(`DAED_DEVNET_MINT`), and every script targets devnet with
+`RPC_URL=https://api.devnet.solana.com`.
+
 ## The dAED reference token
 
 dAED is **not** an AED stablecoin. It is an unbacked devnet **reference
