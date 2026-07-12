@@ -89,8 +89,9 @@ Actors in a Solana Pay flow, and who is regulated:
 | Token | Issuer | Chain(s) | Status |
 | --- | --- | --- | --- |
 | AE Coin | AED Stablecoin LLC | private/permissioned | first CBUAE-licensed (Dec 2024); Dubai Finance pilot |
-| **AEDZ (Zand AED)** | Zand Bank | **multiple public chains** (EVM; XRPL under evaluation) | first regulated multi-chain AED on public blockchains (Nov 2025) |
-| DDSC | IHC / Sirius / FAB | ADI Chain | live institutionally; VARA-exchange NOC (Jul 2026) |
+| **AEDZ (Zand AED)** | Zand Trust | **XRP Ledger** (Ripple, Feb 2026); marketed multi-chain | first regulated multi-chain AED on public blockchains (Nov 2025) |
+| AEDC | AEDC Stablecoin LLC | not public | CBUAE-licensed (Feb 2026 register) |
+| DDSC | IHC / Sirius / FAB | ADI Chain | operational approval (Jul 2026); VARA-exchange NOC |
 | USDU | Universal Digital | n/a | USD-pegged, ADGM FSRA |
 | RAKBank instrument | RAKBank | n/a | in-principle approval |
 

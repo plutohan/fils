@@ -12,26 +12,30 @@ regulated AED stablecoin issuers who have not deployed on Solana *yet*.
 
 ## Why this exists
 
-Since June 2025, the Central Bank of the UAE's [Payment Token Services
+Under the Central Bank of the UAE's [Payment Token Services
 Regulation](https://rulebook.centralbank.ae/en/rulebook/payment-token-services-regulation)
-makes **licensed dirham-backed payment tokens the only crypto a UAE mainland
-merchant may accept for goods and services**. USD stablecoins are out for
-domestic payments; AED stablecoins are in.
+(in full enforcement since mid-2026), **licensed dirham payment tokens are the
+only crypto a UAE mainland merchant may accept for goods and services** (free
+zones excepted). USD stablecoins are out for domestic payments; AED tokens are
+in.
 
-Five regulated AED tokens now exist (AE Coin, Zand AED, DDSC, USDU, RAKBank's
-instrument): **none of them on Solana**. Meanwhile Solana is the chain where
-retail payments actually work: ~400 ms finality, sub-cent fees, an existing
-payments stack ([Solana Pay](https://docs.solanapay.com/),
+The CBUAE's February 2026 register lists three licensed dirham-token issuers
+(AED StableCoin / AE Coin, Zand Trust / Zand AED, AEDC); DDSC added operational
+approval in mid-2026. As of July 2026 **none is confirmed live on Solana**
+(AE Coin on its own rails, Zand AED on the XRP Ledger, DDSC on ADI Chain). That
+is a dated finding, not a permanent fact. Meanwhile Solana is where retail
+payments actually work: ~400 ms finality, sub-cent fees, an existing payments
+stack ([Solana Pay](https://docs.solanapay.com/),
 [commerce-kit](https://github.com/solana-foundation/commerce-kit),
 [pay-kit](https://github.com/solana-foundation/pay-kit)), and Token-2022
-extensions (transfer hooks, freeze, confidential transfer) that map almost
-one-to-one onto what the CBUAE requires from a payment token issuer.
+extensions (transfer hooks, freeze, confidential transfer) that give an issuer
+the building blocks to implement its compliance obligations at the token level.
 
 What's missing is the connective tissue. Fils is that tissue:
 
 | Piece | What it is | Who it's for |
 | --- | --- | --- |
-| [`programs/daed-gate`](programs/daed-gate) | **Token ACL (sRFC37) perimeter**: default-frozen mint + *permissionless thaw* gated by KYC attestations, including **real Solana Attestation Service credentials**; transfers stay standard. The recommended compliance path | AED issuers evaluating Solana |
+| [`programs/daed-gate`](programs/daed-gate) | **Token ACL (sRFC37) perimeter**: default-frozen mint + *permissionless thaw* gated by KYC attestations, including **real Solana Attestation Service credentials**; transfers stay standard. One issuer-control design (not an architecture the regulation dictates) | AED issuers evaluating Solana |
 | [`programs/daed-hook`](programs/daed-hook) | Token-2022 **transfer-hook allowlist program**: the same perimeter enforced on every transfer, for when per-transfer logic is genuinely required | AED issuers needing strict per-transfer control |
 | [`scripts`](packages/scripts) | Create **dAED**, a devnet AED reference token (Token-2022, 2 decimals = fils, metadata, freeze authority) + faucet | Developers who need AED to build against today |
 | [`@fils/core`](packages/core) | TypeScript SDK: AED token registry, fils-precise amounts with AR/EN formatting, Solana Pay-compatible payment requests, on-chain payment verification, UAE-e-invoice-aligned receipts | Payment app builders |
@@ -45,12 +49,12 @@ What's missing is the connective tissue. Fils is that tissue:
 - **Retail QR payments are only viable with sub-second finality and sub-cent
   fees.** A karak chai costs 1.5 AED; a payment rail that costs cents or
   settles in minutes cannot carry it.
-- **Token-2022 is the only mainstream token standard with issuer controls as
-  first-class extensions**: transfer hooks (allowlists), default account
-  state, freeze, permanent delegate, confidential transfer. The CBUAE's
-  requirements for payment token issuers (control over distribution,
-  redemption at par, sanctions compliance) become *token configuration*, not
-  custom L1 work.
+- **Token-2022 exposes issuer controls as first-class extensions**: transfer
+  hooks (allowlists), default account state, freeze, permanent delegate,
+  confidential transfer. An issuer's obligations (control over distribution,
+  redemption at par, sanctions compliance) can be built from these as *token
+  configuration* rather than custom L1 work. These are design options, not an
+  architecture the regulation dictates.
 - **The payments stack already exists.** Fils does not reinvent Solana Pay or
   commerce-kit; it adds the dirham-specific layer on top: the token, the
   registry, the compliance shape, the localization, the playbook.
