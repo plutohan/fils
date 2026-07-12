@@ -67,6 +67,17 @@ export function receiptToPintAeXml(input: ReceiptToPintAeInput): string {
     // reconcile. A hand-crafted or tampered receipt cannot smuggle negative
     // lines or a mismatched taxable/payable amount into the invoice.
     const { grossFils, netFils, vatFils } = assertReceiptTotalsConsistent(receipt);
+    // The receipt embeds the on-chain amount it was settled with. Re-check the
+    // invariant buildReceipt enforces (payment covers the gross): a hand-crafted
+    // receipt must not emit an invoice labelled "Settled on Solana" against an
+    // underpaying signature.
+    const paidFils = parseFils(receipt.payment.amountFils, 'payment.amountFils');
+    if (paidFils < grossFils) {
+        throw new FilsError(
+            'INCONSISTENT_INPUT',
+            `receipt payment of ${paidFils} fils does not cover the invoice gross of ${grossFils} fils`,
+        );
+    }
     const lines = reconcileLineNets(receipt, netFils);
 
     const issueDate = receipt.issuedAt.slice(0, 10);
@@ -217,26 +228,61 @@ interface ReconciledLine {
  */
 function reconcileLineNets(receipt: FilsReceipt, documentNetFils: bigint): ReconciledLine[] {
     const divisor = 10_000n + VAT_RATE_BPS;
+    // Floor each line's net and keep its fractional remainder. Surplus fils are
+    // then apportioned by the largest-remainder method. Flooring (never rounding
+    // up) means reconciliation can only ever *add* fils to a line, so a receipt
+    // of positive lines can never round into a negative invoice line.
     const lines = receipt.lines.map(line => {
-        const gross = BigInt(line.totalFils);
+        const numerator = BigInt(line.totalFils) * 10_000n;
         return {
             description: line.description,
             quantity: line.quantity,
-            netFils: (gross * 10_000n + divisor / 2n) / divisor,
+            netFils: numerator / divisor,
+            remainder: numerator % divisor,
         };
     });
-    const sum = lines.reduce((total, line) => total + line.netFils, 0n);
-    const remainder = documentNetFils - sum;
-    if (remainder !== 0n && lines.length > 0) {
-        const largest = lines.reduce((a, b) => (b.netFils > a.netFils ? b : a));
-        largest.netFils += remainder;
+    const flooredSum = lines.reduce((total, line) => total + line.netFils, 0n);
+    let surplus = documentNetFils - flooredSum;
+    // Hand each surplus fil to the line with the largest fractional remainder.
+    const byRemainderDesc = [...lines].sort((a, b) =>
+        b.remainder > a.remainder ? 1 : b.remainder < a.remainder ? -1 : 0,
+    );
+    for (const line of byRemainderDesc) {
+        if (surplus <= 0n) break;
+        line.netFils += 1n;
+        surplus -= 1n;
     }
-    return lines.map(line => ({
-        ...line,
-        // Unit price at 4dp of AED (hundredths of a fils) so qty × price
-        // stays close to the line net without floating point.
-        unitNetFils: (line.netFils * 100n + BigInt(line.quantity) / 2n) / BigInt(line.quantity),
-    }));
+    // Defensive: only reachable if the document net rounded below the floored
+    // sum. Trim from the smallest-remainder lines that can spare a fil, never
+    // below zero.
+    if (surplus < 0n) {
+        const byRemainderAsc = [...lines].sort((a, b) =>
+            a.remainder > b.remainder ? 1 : a.remainder < b.remainder ? -1 : 0,
+        );
+        for (const line of byRemainderAsc) {
+            if (surplus >= 0n) break;
+            if (line.netFils > 0n) {
+                line.netFils -= 1n;
+                surplus += 1n;
+            }
+        }
+    }
+    return lines.map(line => {
+        if (line.netFils < 0n) {
+            throw new FilsError(
+                'INCONSISTENT_INPUT',
+                `reconciled net for line "${line.description}" is negative (${line.netFils})`,
+            );
+        }
+        return {
+            description: line.description,
+            quantity: line.quantity,
+            netFils: line.netFils,
+            // Unit price at 4dp of AED (hundredths of a fils) so qty × price
+            // stays close to the line net without floating point.
+            unitNetFils: (line.netFils * 100n + BigInt(line.quantity) / 2n) / BigInt(line.quantity),
+        };
+    });
 }
 
 function party(info: PintAeParty): string {

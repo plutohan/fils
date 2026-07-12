@@ -118,4 +118,38 @@ describe('receiptToPintAeXml', () => {
         const tampered: FilsReceipt = { ...receipt, totals: { ...receipt.totals, netFils: '999' } };
         expect(() => receiptToPintAeXml({ receipt: tampered, supplier: SUPPLIER })).toThrowError(FilsError);
     });
+
+    it('never produces a negative invoice line from positive receipt lines (rounding)', () => {
+        // 100 lines of 1 fils each: the document net (95) sits far below the
+        // naive per-line rounding sum, so dumping the whole remainder on one
+        // line would drive it negative. Largest-remainder apportionment keeps
+        // every line at or above its floor.
+        const lines = Array.from({ length: 100 }, (_, i) => ({
+            description: `Sticker ${i}`,
+            quantity: 1,
+            unitFils: 1n,
+        }));
+        const xml = receiptToPintAeXml({ receipt: receiptWith(lines), supplier: SUPPLIER });
+        const lineNets = amounts(xml, 'cbc:LineExtensionAmount');
+        const [documentNet, ...perLine] = lineNets;
+        expect(perLine).toHaveLength(100);
+        expect(perLine.some(amount => amount.startsWith('-'))).toBe(false);
+        expect(amounts(xml, 'cbc:PriceAmount').some(amount => amount.startsWith('-'))).toBe(false);
+        // Per-line nets still sum exactly to the document net.
+        const toFils = (amount: string): bigint => {
+            const [whole = '0', fraction = ''] = amount.split('.');
+            return BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
+        };
+        const sum = perLine.reduce((total, amount) => total + toFils(amount), 0n);
+        expect(sum).toBe(toFils(documentNet ?? '0'));
+    });
+
+    it('rejects a receipt whose embedded payment underpays the gross', () => {
+        // buildReceipt binds payment.amountFils >= gross, but a hand-crafted
+        // receipt object can violate it; the converter must not emit a
+        // "Settled on Solana" invoice against an underpaying signature.
+        const receipt = receiptWith([{ description: 'Karak chai', quantity: 3, unitFils: 150n }]);
+        const tampered: FilsReceipt = { ...receipt, payment: { ...receipt.payment, amountFils: '1' } };
+        expect(() => receiptToPintAeXml({ receipt: tampered, supplier: SUPPLIER })).toThrowError(FilsError);
+    });
 });
