@@ -34,10 +34,18 @@ const oneSignatureRpc = {
                 meta: {
                     err: null,
                     preTokenBalances: [],
-                    postTokenBalances: [{ mint: MINT, owner: SELLER, uiTokenAmount: { amount: '25' } }],
+                    postTokenBalances: [{ mint: MINT, owner: SELLER, uiTokenAmount: { amount: '25', decimals: 2 } }],
                 },
             }),
     }),
+} as unknown as Agent402Rpc;
+
+// getSlot answers, but verification throws (transient RPC failure): the
+// challenge must not be permanently consumed by the failed attempt.
+const throwingRpc = {
+    getSlot: () => ({ send: () => Promise.resolve(1n) }),
+    getSignaturesForAddress: () => ({ send: () => Promise.reject(new Error('rpc down')) }),
+    getTransaction: () => ({ send: () => Promise.resolve(null) }),
 } as unknown as Agent402Rpc;
 
 async function withServer<T>(rpc: Agent402Rpc, fn: (url: string) => Promise<T>): Promise<T> {
@@ -168,6 +176,20 @@ describe('createAgent402Server', () => {
             expect(second.status).toBe(402);
             const body = (await second.json()) as { error?: string };
             expect(body.error).toContain('already applied');
+        });
+    });
+
+    it('does not burn a challenge when verification throws (transient RPC failure)', async () => {
+        await withServer(throwingRpc, async url => {
+            const reference = await newReference(url);
+            const first = await fetch(url, { headers: { 'X-PAYMENT': proofFor(reference) } });
+            expect(first.status).toBe(500);
+            // The transient failure must not permanently consume the challenge:
+            // a retry is processed again (500), never rejected as already-used.
+            const second = await fetch(url, { headers: { 'X-PAYMENT': proofFor(reference) } });
+            expect(second.status).toBe(500);
+            const body = (await second.json()) as { error?: string };
+            expect(body.error ?? '').not.toContain('already used');
         });
     });
 });

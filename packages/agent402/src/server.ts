@@ -15,6 +15,14 @@
  * facilitator — the payer submits the transfer and the seller self-verifies
  * on-chain; the header carries a reference proof instead of a signed
  * transaction. Full pay-kit facilitator integration is a roadmap item.
+ *
+ * Deployment scope (reference limitation): challenge state and spent-signature
+ * tracking are in-process. That is correct for a single instance; a replicated
+ * deployment must move both to a shared, atomic store (e.g. Postgres/Redis),
+ * or a single on-chain payment tagged with several references could settle a
+ * challenge on more than one instance, and a paid retry routed to a different
+ * instance (or a restart) would fail to find its challenge. A shared settlement
+ * authority (pay-kit facilitator) is the roadmap path.
  */
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 
@@ -29,6 +37,7 @@ import {
     parseSolanaPayUrl,
     type AedPaymentRequest,
     type AedTokenInfo,
+    type PaymentVerification,
     type PaymentVerificationRpc,
 } from '@fils/core';
 import { payAedRequest, type DaedRpc } from '@fils/daed';
@@ -169,11 +178,23 @@ export function createAgent402Server(config: Agent402Config): Server {
         // honest client can retry once its payment lands.
         pending.settled = true;
 
-        const verification = await findPayment({
-            rpc: config.rpc,
-            request: pending.request,
-            minSlot: pending.minSlot,
-        });
+        // findPayment defaults to `finalized`: a paid resource is irreversible,
+        // so it must not be served on a merely-confirmed payment a fork could
+        // roll back.
+        let verification: PaymentVerification;
+        try {
+            verification = await findPayment({
+                rpc: config.rpc,
+                request: pending.request,
+                minSlot: pending.minSlot,
+            });
+        } catch (error) {
+            // A transient verification failure (RPC timeout/error) must not burn
+            // the challenge: reset so an honest client whose payment has landed
+            // can retry, then surface the failure as a 500.
+            pending.settled = false;
+            throw error;
+        }
         if (verification.status !== 'confirmed') {
             pending.settled = false;
             respondJson(response, 402, {
@@ -281,7 +302,14 @@ export async function payAndFetch(
     });
 
     const proof = Buffer.from(JSON.stringify({ reference: accept.reference })).toString('base64');
-    const retry = await fetch(url, { headers: { 'X-PAYMENT': proof } });
+    // The server verifies at `finalized` by default, so the paywall opens only
+    // once the payment is finalized. Poll the paid request through the finality
+    // window rather than racing it with a single immediate retry.
+    let retry = await fetch(url, { headers: { 'X-PAYMENT': proof } });
+    for (let attempt = 0; retry.status === 402 && attempt < 90; attempt += 1) {
+        await sleep(1000);
+        retry = await fetch(url, { headers: { 'X-PAYMENT': proof } });
+    }
     return {
         status: retry.status,
         body: await retry.json(),
@@ -289,3 +317,5 @@ export async function payAndFetch(
         paidReference: accept.reference,
     };
 }
+
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
