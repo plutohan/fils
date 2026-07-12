@@ -68,8 +68,14 @@ step('5. buyer pays the request');
 const paymentSignature = await payAedRequest(rpc, buyer, request);
 console.log(`sig  ${paymentSignature}`);
 
-step('6. merchant verifies the payment on-chain (by reference only)');
-const verification = await findPayment({ rpc, request });
+step('6. merchant verifies the payment on-chain (by reference only, waiting for finality)');
+// findPayment defaults to `finalized`, so a merchant polls until the payment
+// finalizes rather than trusting a confirmed-but-reversible fork.
+let verification = await findPayment({ rpc, request });
+for (let attempt = 0; verification.status !== 'confirmed' && attempt < 90; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    verification = await findPayment({ rpc, request });
+}
 if (verification.status !== 'confirmed') {
     console.error(`verification failed: ${JSON.stringify(verification)}`);
     process.exit(1);
