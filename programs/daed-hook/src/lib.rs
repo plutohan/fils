@@ -15,9 +15,17 @@
 //! seed at offset 32 of the token account).
 //!
 //! Reference implementation for the Fils toolkit — audit before any mainnet
-//! use. Known limitation (reference scope): the mint authority administering
-//! the allowlist is a single Ed25519 signer, not an SPL multisig or governance
-//! PDA; a production issuer would adapt this.
+//! use. Known limitations (reference scope):
+//! - The hook gates the transfer *destination*: it blocks a non-allowlisted
+//!   wallet from receiving, but does not stop a *revoked* holder from sending
+//!   an existing balance on to another allowlisted wallet.
+//!   `set_allowed(wallet, false)` closes the receive side only; to immobilise a
+//!   revoked account's existing balance, freeze it with the mint's freeze
+//!   authority (or the daed-gate perimeter). Gating the *source* owner as well
+//!   would also break delegate- and DEX-routed transfers, so suspension is
+//!   deliberately left to freeze rather than the allowlist.
+//! - The mint authority administering the allowlist is a single Ed25519 signer,
+//!   not an SPL multisig or governance PDA; a production issuer would adapt this.
 
 use anchor_lang::{
     prelude::*,

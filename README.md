@@ -37,7 +37,7 @@ What's missing is the connective tissue. Fils is that tissue:
 | [`@fils/core`](packages/core) | TypeScript SDK: AED token registry, fils-precise amounts with AR/EN formatting, Solana Pay-compatible payment requests, on-chain payment verification, UAE-e-invoice-aligned receipts | Payment app builders |
 | [`apps/demo`](apps/demo) | Merchant checkout / POS demo (Arabic RTL + English): QR → pay → verified receipt → downloadable **PINT AE e-invoice** | Merchants & hackathon teams |
 | [`@fils/einvoice`](packages/einvoice) | **UAE e-invoice XML** (Peppol PINT AE) from Fils receipts. Mandate waves start Jan 2027 | VAT-registered merchants & their ASPs |
-| [`@fils/agent402`](packages/agent402) | **AED agentic payments**: an x402-style HTTP 402 paywall settled in dAED, with the agent-side pay-and-retry client | AI-agent & API builders |
+| [`@fils/agent402`](packages/agent402) | **AED agentic payments**: an x402-style HTTP 402 paywall settled in dAED, with the agent-side pay-and-retry client (single-instance reference; a replicated deployment needs a shared settlement store) | AI-agent & API builders |
 | [`docs/playbook.md`](docs/playbook.md) | **UAE Solana Payments Playbook**: PTSR, Federal Decree-Law 6/2025, VARA and free-zone carve-outs mapped to a Solana stack | Everyone shipping payments in the UAE |
 
 ## Why Solana
@@ -104,8 +104,8 @@ Solana:
 - Freeze authority retained by the issuer (PTSR: issuer control, law
   enforcement response)
 - Optional transfer-hook allowlist ([`programs/daed-hook`](programs/daed-hook)):
-  restrict transfers to allowlisted (KYC'd) wallets, the strictest reading of
-  a licensed distribution perimeter, ready to switch on
+  restrict who can *receive* to allowlisted (KYC'd) wallets, the strictest
+  reading of a licensed distribution perimeter, ready to switch on
 
 Real issuers replace the faucet with reserves and licensing; the token shape,
 the SDK, and the merchant flow carry over unchanged. That is the point.
