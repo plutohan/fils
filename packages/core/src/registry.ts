@@ -63,11 +63,19 @@ export class AedTokenRegistry {
 }
 
 /**
- * Registry pre-loaded with the built-in tokens. Pass extra entries for
- * locally-created mints (see `@fils/scripts` create-daed).
+ * The dAED reference mint this repo maintains on devnet, created by
+ * `@fils/scripts` create-daed. Unbacked; for building and testing only.
+ */
+export const DAED_DEVNET_MINT = address('59YMGgi9UwUMJt7dMbhumQKno3rdyf9paNyArutxybr1');
+
+/**
+ * Registry pre-loaded with the built-in tokens (the devnet dAED reference
+ * mint). Pass extra entries for locally-created mints (see `@fils/scripts`
+ * create-daed).
  */
 export function createAedTokenRegistry(extra: AedTokenInfo[] = []): AedTokenRegistry {
     const registry = new AedTokenRegistry();
+    registry.register(describeDaedMint(DAED_DEVNET_MINT, 'devnet'));
     for (const token of extra) {
         registry.register(token);
     }

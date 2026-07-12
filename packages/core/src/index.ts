@@ -13,6 +13,7 @@ export {
 export { explorerTxUrl, guessClusterFromUrl } from './cluster.js';
 export {
     AedTokenRegistry,
+    DAED_DEVNET_MINT,
     TOKEN_2022_PROGRAM_ADDRESS,
     TOKEN_PROGRAM_ADDRESS,
     createAedTokenRegistry,
