@@ -13,13 +13,22 @@ interface Entry {
     err: unknown;
     /** Fils credited to MERCHANT for MINT in this transaction. */
     delta: bigint;
+    /** On-chain decimals of MINT as reported in tx meta (defaults to 2 = fils). */
+    decimals?: number;
 }
 
-/** A fake RPC over a fixed, newest-first list of reference-tagged signatures. */
-function mockRpc(entries: Entry[]): PaymentVerificationRpc {
+/**
+ * A fake RPC over a fixed, newest-first list of reference-tagged signatures.
+ * Pass `seenCommitments` to capture the commitment threaded into each RPC call.
+ */
+function mockRpc(entries: Entry[], seenCommitments?: string[]): PaymentVerificationRpc {
     const bySig = new Map(entries.map(entry => [entry.signature, entry]));
     const rpc = {
-        getSignaturesForAddress(_reference: unknown, options?: { limit?: number; before?: string }) {
+        getSignaturesForAddress(
+            _reference: unknown,
+            options?: { limit?: number; before?: string; commitment?: string },
+        ) {
+            if (options?.commitment !== undefined) seenCommitments?.push(options.commitment);
             return {
                 send: () => {
                     let list = entries;
@@ -40,7 +49,8 @@ function mockRpc(entries: Entry[]): PaymentVerificationRpc {
                 },
             };
         },
-        getTransaction(signature: string) {
+        getTransaction(signature: string, options?: { commitment?: string }) {
+            if (options?.commitment !== undefined) seenCommitments?.push(options.commitment);
             return {
                 send: () => {
                     const entry = bySig.get(String(signature));
@@ -54,7 +64,16 @@ function mockRpc(entries: Entry[]): PaymentVerificationRpc {
                             postTokenBalances:
                                 entry.delta === 0n
                                     ? []
-                                    : [{ mint: MINT, owner: MERCHANT, uiTokenAmount: { amount: entry.delta.toString() } }],
+                                    : [
+                                          {
+                                              mint: MINT,
+                                              owner: MERCHANT,
+                                              uiTokenAmount: {
+                                                  amount: entry.delta.toString(),
+                                                  decimals: entry.decimals ?? 2,
+                                              },
+                                          },
+                                      ],
                         },
                     });
                 },
@@ -112,5 +131,29 @@ describe('findPayment', () => {
         }));
         const result = await findPayment({ rpc: mockRpc(entries), request, maxSignatures: 3, pageSize: 3 });
         expect(result.status).toBe('indeterminate');
+    });
+
+    it('fails closed on a mint whose on-chain decimals are not fils (2)', async () => {
+        // An attacker registers a 6-decimal mint as AED and transfers 1250 raw
+        // units (0.001250 tokens) tagged with the reference. The raw delta
+        // equals amountFils, but the mint is not fils-precise, so it must not
+        // confirm.
+        const entries: Entry[] = [{ signature: 'wrong-decimals', slot: 180n, err: null, delta: 1250n, decimals: 6 }];
+        const result = await findPayment({ rpc: mockRpc(entries), request });
+        expect(result.status).toBe('not-found');
+    });
+
+    it('reads on-chain at finalized commitment by default, and honours an override', async () => {
+        const entries: Entry[] = [{ signature: 'real-payment', slot: 180n, err: null, delta: 1250n }];
+
+        const seenDefault: string[] = [];
+        const confirmed = await findPayment({ rpc: mockRpc(entries, seenDefault), request });
+        expect(confirmed.status).toBe('confirmed');
+        expect(seenDefault).not.toHaveLength(0);
+        expect(seenDefault.every(commitment => commitment === 'finalized')).toBe(true);
+
+        const seenOverride: string[] = [];
+        await findPayment({ rpc: mockRpc(entries, seenOverride), request, commitment: 'confirmed' });
+        expect(seenOverride.every(commitment => commitment === 'confirmed')).toBe(true);
     });
 });

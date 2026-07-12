@@ -6,6 +6,7 @@ import type {
     Signature,
 } from '@solana/kit';
 
+import { AED_DECIMALS } from './amount.js';
 import type { AedPaymentRequest } from './payment.js';
 
 /** The RPC surface `findPayment` needs — any `createSolanaRpc(...)` satisfies it. */
@@ -61,6 +62,15 @@ export interface FindPaymentInput {
     maxSignatures?: number;
     /** Signatures fetched per `getSignaturesForAddress` page (RPC max 1000). Default 1000. */
     pageSize?: number;
+    /**
+     * Commitment both RPC reads run at. Defaults to `'finalized'`: irreversible
+     * fulfillment (serving a paid resource, issuing a receipt) must not act on a
+     * merely-confirmed payment that a dropped fork could still roll back. Pass
+     * `'confirmed'` only for fast, reversible UX where that risk is acceptable.
+     * (`'processed'` is intentionally not offered: it is never safe for
+     * settlement and the signature RPC rejects it.)
+     */
+    commitment?: 'confirmed' | 'finalized';
 }
 
 /**
@@ -77,6 +87,7 @@ export async function findPayment(input: FindPaymentInput): Promise<PaymentVerif
     const minSlot = input.minSlot;
     const maxSignatures = Math.max(1, input.maxSignatures ?? 1000);
     const pageSize = Math.min(Math.max(1, input.pageSize ?? 1000), 1000);
+    const commitment = input.commitment ?? 'finalized';
 
     let mismatch: Extract<PaymentVerification, { status: 'amount-mismatch' }> | undefined;
     let before: Signature | undefined;
@@ -93,6 +104,7 @@ export async function findPayment(input: FindPaymentInput): Promise<PaymentVerif
         const page = await rpc
             .getSignaturesForAddress(request.reference, {
                 limit,
+                commitment,
                 ...(before !== undefined ? { before } : {}),
             })
             .send();
@@ -112,12 +124,16 @@ export async function findPayment(input: FindPaymentInput): Promise<PaymentVerif
             const transaction = await rpc
                 .getTransaction(entry.signature, {
                     encoding: 'jsonParsed',
+                    commitment,
                     maxSupportedTransactionVersion: 0,
                 })
                 .send();
             if (transaction === null || transaction.meta === null || transaction.meta.err !== null) continue;
 
             const received = recipientDeltaFils(transaction.meta, request.recipient, request.token.mint);
+            // A mint whose on-chain decimals are not fils (2) cannot satisfy an
+            // AED request: its raw units are not a fils count. Fail closed.
+            if (received === null) continue;
             if (received >= request.amountFils) {
                 return {
                     status: 'confirmed',
@@ -142,7 +158,7 @@ export async function findPayment(input: FindPaymentInput): Promise<PaymentVerif
 interface TokenBalance {
     readonly mint: string;
     readonly owner?: string;
-    readonly uiTokenAmount: { readonly amount: string };
+    readonly uiTokenAmount: { readonly amount: string; readonly decimals: number };
 }
 
 interface TransactionTokenMeta {
@@ -150,11 +166,19 @@ interface TransactionTokenMeta {
     readonly postTokenBalances?: readonly TokenBalance[] | null;
 }
 
-/** Sum the recipient-owned balance change for `mint` across the transaction. */
-function recipientDeltaFils(meta: TransactionTokenMeta, recipient: Address, mint: Address): bigint {
+/**
+ * Sum the recipient-owned balance change for `mint`, in fils. Returns `null`
+ * when any of the recipient's balances for this mint is not 2-decimal: raw
+ * token units only equal fils at `AED_DECIMALS`, so a mint with other decimals
+ * (e.g. a 6-decimal token registered as AED) must fail closed rather than have
+ * its raw amount misread as a fils total.
+ */
+function recipientDeltaFils(meta: TransactionTokenMeta, recipient: Address, mint: Address): bigint | null {
+    const matching = (balances: readonly TokenBalance[] | null | undefined): readonly TokenBalance[] =>
+        (balances ?? []).filter(balance => balance.owner === recipient && balance.mint === mint);
+    const involved = [...matching(meta.preTokenBalances), ...matching(meta.postTokenBalances)];
+    if (involved.some(balance => balance.uiTokenAmount.decimals !== AED_DECIMALS)) return null;
     const sum = (balances: readonly TokenBalance[] | null | undefined): bigint =>
-        (balances ?? [])
-            .filter(balance => balance.owner === recipient && balance.mint === mint)
-            .reduce((total, balance) => total + BigInt(balance.uiTokenAmount.amount), 0n);
+        matching(balances).reduce((total, balance) => total + BigInt(balance.uiTokenAmount.amount), 0n);
     return sum(meta.postTokenBalances) - sum(meta.preTokenBalances);
 }
