@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "AED (UAE dirham) payments SDK for Solana: token registry, fils-precise amounts, Solana Pay-compatible payment requests, on-chain verification, receipts",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plutohan/fils.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,6 +25,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build",
     "test": "vitest run"
   },
   "dependencies": {

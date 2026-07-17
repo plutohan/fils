@@ -1,8 +1,16 @@
 {
   "name": "@fils/einvoice",
   "version": "0.1.0",
-  "description": "UAE PINT AE (Peppol) e-invoice XML from Fils receipts — Solana-settled sales, mandate-ready",
+  "description": "UAE PINT AE (Peppol) e-invoice XML from Fils receipts for Solana-settled sales: a structurally faithful draft to validate with your accredited service provider",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plutohan/fils.git",
+    "directory": "packages/einvoice"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,6 +25,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build",
     "test": "vitest run"
   },
   "dependencies": {

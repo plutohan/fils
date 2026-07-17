@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "dAED reference token operations for Solana: create the Token-2022 mint, issuer mint-to, and wallet-side payment of AED payment requests",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plutohan/fils.git",
+    "directory": "packages/daed"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -21,6 +29,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "pnpm run build",
     "test": "vitest run"
   },
   "dependencies": {
