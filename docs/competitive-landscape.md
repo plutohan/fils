@@ -58,7 +58,7 @@ chain-vs-chain race, and Solana is currently losing it:
 | Player | Rail | Momentum |
 | --- | --- | --- |
 | **DDSC** (IHC/FAB/Sirius) | **ADI Chain** (own institutional L2), exclusive | AED 150M+ transacted; VARA-exchange NOC (7/2026) → retail reach; M-Pesa/Africa corridor roadmap; PUSD also deployed on ADI |
-| **AEDZ** (Zand) | EVM chains live; **XRPL under evaluation** (Ripple partnership 2/2026) | The only multi-chain-by-strategy issuer → the most convertible target; banks PRYPCO Mint (real-estate tokenization) |
+| **AEDZ** (Zand) | EVM chains live; **Ripple partnership toward XRPL** (2/2026) | The only multi-chain-by-strategy issuer → the most convertible target; banks PRYPCO Mint (real-estate tokenization) |
 | **AE Coin** | Private/permissioned | Dubai Finance pilot |
 | **e& × Al Maryah CB** | TBD (pilot 12/2025) | Consumer payments distribution via telecom |
 | **RAKBank** | TBD (in-principle) | SME/retail corridors |

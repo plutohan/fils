@@ -6,16 +6,16 @@
 Open-source (Apache-2.0): <https://github.com/plutohan/fils>
 
 One-liner: *An open-source reference integration and SDK for accepting UAE
-dirham (AED) payments on Solana (a regulation-shaped Token-2022 reference
+dirham (AED) payments on Solana — a regulation-shaped Token-2022 reference
 token, a payments SDK, a merchant checkout, and a counsel-reviewable
-compliance playbook) so that when a licensed AED stablecoin evaluates Solana,
-the integration path, the merchant tooling, and the UAE rules are already
-mapped and public.*
+compliance playbook. It turns an issuer's AED-on-Solana evaluation from
+greenfield research into a concrete acceptance test, and gives UAE builders
+working dirham rails today.*
 
 ## The problem (why now, why UAE)
 
-Under the CBUAE Payment Token Services Regulation (PTSR, in full enforcement
-since the one-year transition ended 16 June 2026), **UAE mainland merchants
+Under the CBUAE Payment Token Services Regulation (PTSR, in full effect
+since the one-year transition ended 14 June 2025), **UAE mainland merchants
 may accept only licensed dirham payment tokens for goods and services**; other
 crypto is excluded from domestic retail payments (financial free zones
 excepted, with a narrow carve-out letting foreign tokens buy virtual assets).
@@ -25,19 +25,18 @@ The licensed-issuer landscape, as a dated finding (mid-2026):
 | Token / issuer | Status | Chain |
 | --- | --- | --- |
 | AE Coin — AED StableCoin LLC | CBUAE-licensed | Own bank / payment rails |
-| Zand AED — Zand Trust | CBUAE-licensed; marketed multi-chain | XRP Ledger (Ripple, Feb 2026) |
+| Zand AED — Zand Trust | CBUAE-licensed; marketed multi-chain | Public EVM chains (Nov 2025); Ripple partnership toward XRPL (Feb 2026) |
 | AEDC — AEDC Stable Coin LLC | CBUAE-licensed (Feb 2026 register) | Not public |
-| DDSC — IHC / FAB / Sirius | Operational approval Jul 2026 | ADI Chain |
+| DDSC — IHC / FAB / Sirius | CBUAE launch approval Feb 2026; VARA-exchange clearance Jul 2026 | ADI Chain |
 | RAKBank token | In-principle approval only | n/a |
-| Tether AED | Live | TON |
 
 The CBUAE's February 2026 register lists three licensed dirham-token issuers
 (AED StableCoin, Zand Trust, AEDC). USDU, sometimes grouped with these, is
 USD-backed, not a dirham token.
 
-**No licensed AED token is confirmed live on Solana as of July 2026.** This is
-a dated finding, not a permanent fact: Zand markets Zand AED as multi-chain and
-could add Solana at any time. Either way the same gap stands: an issuer or
+**As of July 2026, no licensed AED issuer or official chain source has
+announced a Solana deployment.** This is a dated finding, not a permanent
+fact: Zand markets Zand AED as multi-chain and could add Solana at any time. Either way the same gap stands: an issuer or
 developer evaluating Solana for dirham payments finds no AED reference token,
 no worked example of how an issuer's compliance controls map onto Token-2022,
 no AED-aware merchant tooling, and no developer-readable account of the UAE
@@ -131,16 +130,20 @@ devnet, the SDK, the checkout, on-chain e2e.
 | --- | --- | --- | --- |
 | M1 | 1-3 | Playbook reviewed by UAE virtual-assets counsel (regulatory claims corrected); an architecture note reviewed by at least one licensed issuer or issuer-adjacent party, with their documented acceptance criteria | $3,500 |
 | M2 | 4-6 | @fils/core v0.1 on npm; hosted devnet demo (AR/EN) + faucet; 3-minute video; an issuer-style sandbox integration guide | $3,000 |
-| M3 | 7-9 | **One licensed issuer completes a documented Solana technical evaluation** against the reference; ≥2 independent developer integrations; hands-on workshop at a Superteam UAE / SEZ Dubai event | $3,500 |
+| M3 | 7-9 | Issuer-evaluation package (architecture note, sandbox, acceptance tests) delivered and walked through with ≥1 licensed issuer or issuer-adjacent party; ≥2 independent developer integrations; hands-on workshop at a Superteam UAE / SEZ Dubai event. **Stretch: a licensed issuer completes a documented Solana technical evaluation** | $3,500 |
 
-Primary KPI: **one licensed AED issuer completing a documented Solana technical
-evaluation** using this reference. Secondary: SDK on npm with a live demo; ≥2
+Primary KPI: an issuer-ready evaluation package delivered and reviewed with at
+least one licensed issuer or issuer-adjacent party; the stretch outcome is **a
+licensed AED issuer completing a documented Solana technical evaluation**
+against this reference. Secondary: SDK on npm with a live demo; ≥2
 independent developer integrations; counsel-reviewed playbook published as the
 UAE reference.
 
-Beyond the grant ([ROADMAP.md](ROADMAP.md)): full PINT AE e-invoicing with an
-accredited service provider, AED agentic payments on x402 / pay-kit, and a
-confidential-balances dAED variant with a regulator auditor key.
+Beyond the grant ([ROADMAP.md](ROADMAP.md)): production integrations of
+reference implementations that already exist in the repo — PINT AE
+e-invoicing validated with an accredited service provider, agent402 settled
+through the x402 / pay-kit facilitator flow, and the confidential-balances
+dAED variant hardened with its regulator auditor key.
 
 ## Budget (approximate allocation)
 
@@ -152,10 +155,10 @@ confidential-balances dAED variant with a regulator auditor key.
 | Workshop + distribution (SEZ Dubai / Superteam UAE) | $1,500 |
 | Contingency / issuer-evaluation support | $2,000 |
 
-No token, no equity, no paid marketing. Without a committed issuer evaluation,
-we would scope the request to **$5,000–$7,500** (counsel review + SDK/demo
-hardening + distribution); the full $10,000 is warranted once a licensed issuer
-commits to the M3 evaluation.
+No token, no equity, no paid marketing. Every line except the contingency
+delivers independently of issuer participation (counsel review, npm release,
+hosted demo, workshop, developer integrations); the contingency funds the
+issuer walkthrough and, when an issuer commits, the stretch evaluation.
 
 ## Sustainability & long-term vision
 

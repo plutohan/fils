@@ -13,7 +13,7 @@ counsel. Last reviewed: July 2026.
 | Accept USDC | Only as payment **for virtual assets or their derivatives** (e.g. an NFT checkout), and only tokens from a CBUAE-**registered** foreign issuer. Or operate from a financial free zone (DIFC/ADGM) under its own rules. |
 | Issue an AED stablecoin | CBUAE Payment Token Issuance licence. UAE-incorporated entity, AED 15M initial capital + 0.5% of outstanding tokens, 100% reserves, redemption at par by next business day. Not a grant-sized project. |
 | Build a custodial wallet / payment app that holds users' payment tokens | Payment Token Custody and Transfer licence (or Non-Objection Registration if you already hold a VARA/SCA VASP licence). |
-| Write open-source payment software, SDKs, reference tokens on devnet | Software itself is not a "Payment Token Service"; the entity *operating* it for UAE customers is what gets licensed. Stay non-custodial and devnet/test-only and you are building tooling, not performing a regulated service. **Confirm your exact model with counsel**; Fils sits deliberately in this lane. |
+| Write open-source payment software, SDKs, reference tokens on devnet | Working assumption (not a legal conclusion): software itself is not a "Payment Token Service" — the entity *operating* it for UAE customers is what gets licensed. Decree-Law 6/2025 (Art. 62) reaches technology that facilitates regulated activity, so this line can move. Stay non-custodial and devnet/test-only to keep the regulated surface minimal, and **confirm your exact model with counsel**; Fils sits deliberately in this lane. |
 | Algorithmic stablecoin, privacy token payments | Prohibited outright. |
 
 ## The regulators, in one map
@@ -57,11 +57,13 @@ counsel. Last reviewed: July 2026.
 
 ## Mapping this onto Solana
 
-The PTSR reads like a Token-2022 configuration sheet:
+An issuer's PTSR obligations map naturally onto Token-2022 **design
+options** — the regulation states the obligations, not this (or any)
+on-chain architecture:
 
-| PTSR requirement (issuer) | Token-2022 mechanism |
+| Issuer obligation | Token-2022 design option |
 | --- | --- |
-| Control of distribution (KYC'd holders) | **Token ACL (sRFC37)**: `DefaultAccountState=frozen` + attestation-gated permissionless thaw ([`daed-gate`](../programs/daed-gate), with on-chain e2e); recommended, transfers stay standard and DeFi-composable; or TransferHook → allowlist program ([`daed-hook`](../programs/daed-hook)) when logic must run on *every* transfer |
+| Controlling distribution (a KYC'd-holder perimeter, if the issuer chooses one) | **Token ACL (sRFC37)**: `DefaultAccountState=frozen` + attestation-gated permissionless thaw ([`daed-gate`](../programs/daed-gate), with on-chain e2e); the Foundation's current guidance for holder gating — transfers stay standard and DeFi-composable. Or TransferHook → allowlist program ([`daed-hook`](../programs/daed-hook)) when logic must run on *every* transfer |
 | KYC once, reuse everywhere | [Solana Attestation Service](https://attest.solana.com/): issuers (Sumsub, Civic, RNS.ID live on mainnet) attest KYC to a wallet; the Gate Program verifies the attestation instead of maintaining a bespoke allowlist |
 | Act on unlawful use / law-enforcement response | Freeze authority on the mint; `set_allowed(wallet, false)` |
 | Redemption at par, burn on redemption | Mint/burn authority against reserve ops |
@@ -133,5 +135,5 @@ receipts already work.
 - SPL transfer hook interface: <https://spl.solana.com/transfer-hook-interface>
 - Solana Pay spec: <https://docs.solanapay.com/spec>
 
-*Roadmap M3 puts this document through review by a UAE virtual-assets law
-firm; wording will be corrected where counsel disagrees.*
+*Grant milestone M1 puts this document through review by a UAE virtual-assets
+law firm; wording will be corrected where counsel disagrees.*

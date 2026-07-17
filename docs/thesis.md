@@ -36,13 +36,14 @@ adjacent issuers treat Solana as core distribution.
 accepting real AED on Solana) is gated on an issuer deployment we do not
 control. Fils' near-term users are therefore:
 
-1. **Grant evaluators / Superteam UAE**: funding fit is strong (public
-   good, regional, only-possible-on-Solana) and is itself a validated
-   "customer" for this artifact class.
+1. **Issuers' technical teams** (and Foundation/Superteam solutions
+   engineers): the brief + working perimeter reduce a Solana deployment
+   evaluation from months to a pilot. Target users today, demonstrated
+   users only once one engages.
 2. **Developers**: hackathon/workshop builders who need AED-shaped rails
    today (dAED, checkout, e-invoice, 402 paywall all runnable in minutes).
-3. **Issuers' technical teams**: the brief + working perimeter reduce a
-   Solana deployment evaluation from months to a pilot.
+3. **Grant programs / Superteam UAE**: funding fit is strong (public good,
+   regional, Solana-specific) — funding, not a customer.
 
 Mitigation for the gating risk: keep integration cost at "a registry entry"
 (done), make the compliance perimeter Foundation-current (Token ACL + SAS,

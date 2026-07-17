@@ -1,22 +1,23 @@
 # daed-hook: licensed-holder allowlist as a Token-2022 transfer hook
 
-A reference implementation of the control a CBUAE-licensed dirham payment
-token issuer needs on-chain: **a positive-permission distribution perimeter**.
+A reference implementation of one on-chain control a licensed dirham payment
+token issuer *may choose*: **a positive-permission distribution perimeter**.
 Attached to a Token-2022 mint via the TransferHook extension, this program is
 invoked by the token program itself on *every* transfer (wallet-to-wallet,
 DEX fill, CPI) and fails the transfer unless the destination owner holds an
 active allowlist entry created by the issuer.
 
-## Why this maps to the PTSR
+## How this relates to an issuer's PTSR obligations
 
-The CBUAE Payment Token Services Regulation expects a licensed issuer to
-control how its dirham token is distributed and to be able to act on
-unlawful use. On Token-2022 that decomposes into:
+The CBUAE Payment Token Services Regulation obliges a licensed issuer to run
+AML/KYC and act on unlawful use; how that translates on-chain is the issuer's
+design choice, not something the regulation prescribes. One decomposition on
+Token-2022:
 
-| Regulatory need | Token-2022 mechanism | Where |
+| Issuer control | Token-2022 mechanism | Where |
 | --- | --- | --- |
 | Distribution perimeter (KYC'd holders only) | TransferHook → this program's allowlist | `transfer_hook` |
-| Suspend a holder | `set_allowed(wallet, false)` (reversible, no account close) | `set_allowed` |
+| Stop a wallet *receiving* | `set_allowed(wallet, false)` (reversible; to immobilise an existing balance, freeze the account) | `set_allowed` |
 | Freeze a specific token account | Mint freeze authority (native) | issuer ops |
 | Redemption at par | issuer burn/mint against reserves | issuer ops |
 
@@ -55,8 +56,9 @@ solana program deploy target/deploy/daed_hook.so \
   --program-id target/deploy/daed_hook-keypair.json
 ```
 
-Verified: builds with Anchor 1.0.2 and deploys to a local Agave 4.0 validator.
-On-chain integration tests (hooked mint end-to-end: allowlisted transfer
-passes, non-allowlisted fails) are milestone M1 of the roadmap.
+Verified: builds with Anchor 1.0.2 and deploys to a local Agave 4.0 validator
+and to devnet. On-chain integration coverage for the hooked-mint path is
+future work; the gate perimeter (the recommended path) has full on-chain e2e
+(`pnpm e2e:gate`).
 
 **This is reference code. Audit before any mainnet use.**

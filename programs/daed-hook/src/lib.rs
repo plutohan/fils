@@ -1,11 +1,12 @@
 //! daed-hook — a Token-2022 transfer-hook program implementing a
 //! licensed-holder allowlist for a regulated AED payment token.
 //!
-//! Regulatory shape (CBUAE Payment Token Services Regulation): a licensed
-//! dirham payment token issuer controls its distribution perimeter. With this
-//! hook attached to the mint, **every** token transfer — wallet-to-wallet,
-//! DEX, CPI — fails unless the *destination owner* has an active allowlist
-//! entry created by the issuer (mint authority). Freezing individual
+//! One issuer-control design (a choice, not a regulatory mandate): a licensed
+//! dirham payment token issuer may enforce a positive-permission distribution
+//! perimeter on-chain. With this hook attached to the mint, **every** token
+//! transfer — wallet-to-wallet, DEX, CPI — fails unless the *destination
+//! owner* has an active allowlist entry created by the issuer (mint
+//! authority). Freezing individual
 //! accounts stays with the mint's freeze authority; this hook adds the
 //! positive-permission perimeter on top.
 //!

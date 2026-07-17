@@ -16,10 +16,10 @@ no waiting on devnet faucets.
 
 | Min | Segment | Beat |
 | --- | --- | --- |
-| 0-10 | **Why dirhams, why here** | PTSR one-slide: mainland payments = licensed AED tokens only; five regulated AED tokens, zero on Solana; the gap is the opportunity. (Source: [playbook](playbook.md)) |
+| 0-10 | **Why dirhams, why here** | PTSR one-slide: mainland payments = licensed AED tokens only; three CBUAE-licensed dirham issuers (plus DDSC's launch approval), none announcing Solana as of July 2026; the gap is the opportunity. (Source: [playbook](playbook.md)) |
 | 10-20 | **The 90-second payment** | Live: `solana-test-validator` → `daed:create` → `pnpm e2e`. Narrate the receipt JSON: fils integers, VAT split, on-chain proof. |
-| 20-35 | **Hands-on 1: Fils Café** | Attendees run `daed:create` + demo (`pnpm --filter demo dev`), order karak, hit "simulate wallet", flip to العربية. Payment confirmed < 1 s. Then `GET /api/invoice/<ref>`: "this XML is what the 2027 mandate wants; you just produced it from a blockchain payment." |
-| 35-50 | **Hands-on 2: the compliance perimeter** | `daed:create -- --default-frozen`, deploy gate, run `pnpm e2e:gate` and read the PASS lines aloud: frozen by default → attest → permissionless thaw → payment → revoke → frozen. Frame: "this is the sRFC37 pattern: the regulator's checklist as configuration." |
+| 20-35 | **Hands-on 1: Fils Café** | Attendees run `daed:create` + demo (`pnpm --filter demo dev`), order karak, hit "simulate wallet", flip to العربية. Payment confirmed < 1 s. Then `GET /api/invoice/<ref>`: "this XML is shaped for the 2027 mandate (PINT AE) — an accredited service provider validates the final fields, but you just produced the draft from a blockchain payment." |
+| 35-50 | **Hands-on 2: the compliance perimeter** | `daed:create -- --default-frozen`, deploy gate, run `pnpm e2e:gate` and read the PASS lines aloud: frozen by default → attest → permissionless thaw → payment → revoke → frozen. Frame: "this is the sRFC37 pattern — one issuer-control design the Foundation's Token ACL guidance describes, expressed as configuration rather than custom infrastructure." |
 | 50-60 | **Demo: agents pay in fils** | `pnpm e2e:402`: 402 challenge → agent pays AED 0.25 on-chain → data. One slide on x402/MPP momentum and why an AED-denominated paid API is unclaimed territory. |
 | 60-75 | **Build prompts + Q&A** | Ideas board below. Superteam UAE grant/hackathon pointers. |
 

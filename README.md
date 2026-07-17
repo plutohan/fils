@@ -7,16 +7,17 @@ regulation-shaped AED reference token, an SDK for accepting AED payments, a
 merchant checkout you can fork, and a developer playbook for building
 compliant payment apps in the UAE.
 
-Apache-2.0. Built to be picked up: by developers, by merchants, and by the
-regulated AED stablecoin issuers who have not deployed on Solana *yet*.
+Apache-2.0. Built to be picked up: by the regulated AED issuers who have not
+deployed on Solana *yet*, by developers building ahead of them, and by the
+merchants who arrive once a licensed token does.
 
 ## Why this exists
 
 Under the Central Bank of the UAE's [Payment Token Services
 Regulation](https://rulebook.centralbank.ae/en/rulebook/payment-token-services-regulation)
-(in full enforcement since mid-2026), **licensed dirham payment tokens are the
-only crypto a UAE mainland merchant may accept for goods and services** (free
-zones excepted). USD stablecoins are out for domestic payments; AED tokens are
+(in full effect since the transition ended in June 2025), **licensed dirham
+payment tokens are the only crypto a UAE mainland merchant may accept for
+goods and services** (free zones excepted). USD stablecoins are out for domestic payments; AED tokens are
 in.
 
 The CBUAE's February 2026 register lists three licensed dirham-token issuers
@@ -24,8 +25,8 @@ The CBUAE's February 2026 register lists three licensed dirham-token issuers
 approval in mid-2026. As of July 2026 **none is confirmed live on Solana**
 (AE Coin on its own rails, Zand AED on the XRP Ledger, DDSC on ADI Chain). That
 is a dated finding, not a permanent fact. Meanwhile Solana is where retail
-payments actually work: ~400 ms finality, sub-cent fees, an existing payments
-stack ([Solana Pay](https://docs.solanapay.com/),
+payments are already practical: ~400 ms finality, sub-cent fees, an existing
+payments stack ([Solana Pay](https://docs.solanapay.com/),
 [commerce-kit](https://github.com/solana-foundation/commerce-kit),
 [pay-kit](https://github.com/solana-foundation/pay-kit)), and Token-2022
 extensions (transfer hooks, freeze, confidential transfer) that give an issuer
@@ -46,9 +47,9 @@ What's missing is the connective tissue. Fils is that tissue:
 
 ## Why Solana
 
-- **Retail QR payments are only viable with sub-second finality and sub-cent
-  fees.** A karak chai costs 1.5 AED; a payment rail that costs cents or
-  settles in minutes cannot carry it.
+- **Retail QR payments need sub-second finality and sub-cent fees.** A karak
+  chai costs 1.5 AED; a payment rail that costs cents or settles in minutes
+  cannot carry it.
 - **Token-2022 exposes issuer controls as first-class extensions**: transfer
   hooks (allowlists), default account state, freeze, permanent delegate,
   confidential transfer. An issuer's obligations (control over distribution,
@@ -111,19 +112,23 @@ Solana:
   restrict who can *receive* to allowlisted (KYC'd) wallets, the strictest
   reading of a licensed distribution perimeter, ready to switch on
 
-Real issuers replace the faucet with reserves and licensing; the token shape,
-the SDK, and the merchant flow carry over unchanged. That is the point.
+Real issuers replace the faucet with reserves and licensing; the token shape
+and the generic payment/receipt layers are designed to carry over, subject to
+the issuer's own integration requirements. That is the point.
 
 ## Status & roadmap
 
-This repository is a working MVP (local validator + devnet). Roadmap:
+This repository is a working MVP: the reference token, both programs, the
+SDK, the checkout, and the on-chain e2e suites are built and deployed to
+devnet. Next (mirrors [GRANT_APPLICATION.md](GRANT_APPLICATION.md)):
 
-1. **M1: Reference token & hook program on devnet**, faucet, issuer design
-   note.
-2. **M2: SDK v0.1 + hosted merchant demo** (AR/EN), end-to-end demo video.
-3. **M3: Playbook legal review** (with a UAE virtual-asset law firm),
-   issuer integration guide, workshop at a Superteam UAE event, mainnet-ready
-   v0.1 release.
+1. **M1: Counsel-reviewed playbook**, plus an architecture note reviewed with
+   at least one licensed issuer or issuer-adjacent party.
+2. **M2: @fils/core v0.1 on npm**, hosted devnet demo + faucet (AR/EN), demo
+   video, issuer-style sandbox integration guide.
+3. **M3: Issuer-evaluation package** walked through with an issuer,
+   independent developer integrations, and a Superteam UAE workshop
+   (stretch: a licensed issuer completes a documented Solana evaluation).
 
 ## Not legal advice
 

@@ -88,8 +88,9 @@ but nobody demos agents paying in **dirhams**.
 
 ### 6. Issuer brief aimed at Zand (AEDZ)
 
-AEDZ is explicitly multi-chain (EVM live, XRPL under evaluation) and Zand
-banks PRYPCO Mint (Dubai real-estate tokenization). The brief: Token ACL +
+AEDZ is explicitly multi-chain (public EVM chains live; Ripple partnership
+toward XRPL, Feb 2026) and Zand banks PRYPCO Mint (Dubai real-estate
+tokenization). The brief: Token ACL +
 SAS + confidential-auditor architecture on Solana, plus Solana settlement for
 property-sale flows. Deliver through Superteam UAE channels.
 
@@ -120,4 +121,4 @@ AED→USDC→INR/PKR/PHP) provide the fiat edges.
 - **Confidential transfer UX**: multi-transaction until Agave v4.2 lands.
 - **Regulatory drift**: Federal Decree-Law 6/2025 compliance deadline
   (Sept 2026) may narrow the non-custodial-software lane; playbook must be
-  re-reviewed then (already an M3 item).
+  re-reviewed then (counsel review is grant milestone M1).

@@ -12,15 +12,20 @@ Your token is multi-chain by strategy; the question is which chain earns the
 next deployment. Solana is where retail-grade payments actually clear:
 ~400 ms finality, fees measured in fractions of a fils, an installed wallet
 base, Solana Pay QR flows, and the fastest-growing agentic-commerce rails
-(x402/MPP). It is the only mainstream stack whose token standard treats
-your regulatory obligations as **native configuration**. Fils exists so your
-integration starts from a working reference instead of a blank page.
+(x402/MPP). Its token standard (Token-2022) exposes issuer controls — freeze,
+default account state, transfer hooks, confidential transfer — as first-class
+extensions, so much of your compliance architecture becomes **configuration**.
+Fils exists so your integration starts from a working reference instead of a
+blank page.
 
-## PTSR obligations → Token-2022 configuration (all demonstrated in Fils)
+## Issuer needs → Token-2022 design options (all demonstrated in Fils)
 
-| Your obligation | Mechanism | Working reference |
+The PTSR states your obligations (AML/KYC, enforcement, redemption); how they
+translate on-chain is your design choice. One worked decomposition:
+
+| Issuer need | Design option | Working reference |
 | --- | --- | --- |
-| Distribution perimeter (KYC'd holders) | `DefaultAccountState=Frozen` + gate program: accounts are born frozen, thaw is permissionless **but attestation-gated** (sRFC37 / Token ACL pattern: transfers stay standard, DeFi-composable) | `programs/daed-gate` + on-chain e2e (`pnpm e2e:gate`) |
+| Distribution perimeter (KYC'd holders, if chosen) | `DefaultAccountState=Frozen` + gate program: accounts are born frozen, thaw is permissionless **but attestation-gated** (sRFC37 / Token ACL pattern: transfers stay standard, DeFi-composable) | `programs/daed-gate` + on-chain e2e (`pnpm e2e:gate`) |
 | KYC once, reusable | Attestor role separated from issuer; swap-in point for Solana Attestation Service credentials (Sumsub/Civic/RNS.ID issue on mainnet today) | `daed-gate` attestor design |
 | Suspension / enforcement | `revoke` (stops future thaws) + `freeze_wallet_account` (stops an existing account) as separate compliance acts; freeze authority held by a program PDA, not a laptop key | `daed-gate` |
 | Strict per-transfer control (if your counsel insists) | Transfer-hook allowlist variant | `programs/daed-hook` |
@@ -33,8 +38,10 @@ integration starts from a working reference instead of a blank page.
 ## What integration actually costs
 
 The day your mint exists on Solana (or a registered representation of it),
-the merchant stack is a **registry entry**: `@fils/core`'s token registry,
-checkout, verification, receipts and e-invoices work unchanged. The
+the generic merchant stack is designed to be a **registry entry**:
+`@fils/core`'s token registry, checkout, verification, receipts and
+e-invoices are built to carry over, subject to your integration requirements
+(decimals, custody, transfer controls, wallet coverage). The
 compliance perimeter is a deployment of `daed-gate` (or the audited Token
 ACL program with the same logic as a Gate Program) plus your KYC provider
 writing attestations. Fils is Apache-2.0: fork it, or point your vendor at

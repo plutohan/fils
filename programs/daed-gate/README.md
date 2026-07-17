@@ -1,7 +1,7 @@
 # daed-gate: attestation-gated permissionless thaw (Token ACL pattern)
 
-The compliance perimeter for a regulated AED token in the shape the Solana
-Foundation now recommends (**sRFC37 / Token ACL**): instead of intercepting
+A compliance-perimeter design for a regulated AED token, in the shape the
+Solana Foundation now recommends for holder gating (**sRFC37 / Token ACL**): instead of intercepting
 every transfer with a hook, the mint is created with
 `DefaultAccountState = Frozen` and its **freeze authority is handed to this
 program's GateConfig PDA**. A new token account is born frozen (unusable)
